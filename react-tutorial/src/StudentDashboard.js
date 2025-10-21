@@ -8,12 +8,10 @@ import {
   CheckCircle2,
   Mail,
   Menu,
-  ChevronLeft,
   CalendarDays,
   User,
   X,
   LogOut,
-  Settings,
   Bell,
   Search,
   MessageCircle,
@@ -26,14 +24,13 @@ import {
   Star,
   Inbox,
   Send,
-  Filter,
   Tag,
   Sparkles,
   RefreshCw,
   Eye,
   Reply,
   Upload
-} from 'lucide-react';
+} from "lucide-react";
 
 const StudentDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -43,6 +40,7 @@ const StudentDashboard = ({ onLogout }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [approvalType, setApprovalType] = useState('');
   const [approvalReason, setApprovalReason] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Add mobile menu state
   const [profileData, setProfileData] = useState({
     name: 'John Doe',
     email: 'john.doe@college.edu',
@@ -139,7 +137,6 @@ const StudentDashboard = ({ onLogout }) => {
   const [emailFilter, setEmailFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEmail, setSelectedEmail] = useState(null);
-  const [showComposeModal, setShowComposeModal] = useState(false);
 
   // Mock emails with AI categories (will be replaced with real Gmail data)
   const [mails, setMails] = useState([
@@ -325,25 +322,6 @@ const StudentDashboard = ({ onLogout }) => {
     orange: 'bg-gray-100 text-gray-700'
   };
 
-  const priorityColors = {
-    high: 'border-l-4 border-l-gray-900 bg-gray-50',
-    medium: 'border-l-4 border-l-gray-600 bg-gray-50',
-    low: 'border-l-4 border-l-gray-400 bg-gray-50'
-  };
-
-  const statusBadges = {
-    pending: 'bg-gray-100 text-gray-700',
-    inProgress: 'bg-gray-100 text-gray-700',
-    submitted: 'bg-gray-100 text-gray-700'
-  };
-
-  const eventTypeColors = {
-    seminar: 'bg-gray-100 text-gray-700',
-    meeting: 'bg-gray-100 text-gray-700',
-    career: 'bg-gray-100 text-gray-700',
-    competition: 'bg-gray-100 text-gray-700'
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -356,12 +334,12 @@ const StudentDashboard = ({ onLogout }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-300 shadow px-6 py-3 flex items-center space-x-3">
-          <CheckCircle2 className="h-5 w-5 text-gray-700" />
-          <span className="text-sm text-gray-900">{toast}</span>
+        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-300 shadow px-4 md:px-6 py-3 flex items-center space-x-3 max-w-sm">
+          <CheckCircle2 className="h-5 w-5 text-gray-700 flex-shrink-0" />
+          <span className="text-sm text-gray-900 truncate">{toast}</span>
         </div>
       )}
 
@@ -420,15 +398,37 @@ const StudentDashboard = ({ onLogout }) => {
         </div>
       )}
 
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-50
+        w-64 bg-white border-r border-gray-200 flex flex-col
+        transform transition-transform duration-300 ease-in-out
+        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         {/* Sidebar Header */}
         <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 bg-gray-900 flex items-center justify-center">
-              <GraduationCap className="h-6 w-6 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 bg-gray-900 flex items-center justify-center">
+                <GraduationCap className="h-6 w-6 text-white" />
+              </div>
+              <span className="font-semibold text-gray-900 text-base">CampusConnect</span>
             </div>
-            <span className="font-semibold text-gray-900 text-base">CampusConnect</span>
+            {/* Mobile Close Button */}
+            <button 
+              onClick={() => setMobileMenuOpen(false)}
+              className="md:hidden hover:bg-gray-100 p-2 rounded"
+            >
+              <X className="h-5 w-5 text-gray-600" />
+            </button>
           </div>
         </div>
 
@@ -446,7 +446,10 @@ const StudentDashboard = ({ onLogout }) => {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setMobileMenuOpen(false); // Close mobile menu on selection
+                  }}
                   className={`w-full flex items-center space-x-3 px-4 py-3 font-medium transition-all ${
                     activeTab === item.id
                       ? 'bg-gray-900 text-white'
@@ -487,16 +490,25 @@ const StudentDashboard = ({ onLogout }) => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto w-full md:w-auto">
         {/* Top Header Bar */}
-        <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-30">
+        <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-4 sticky top-0 z-30">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Student Portal</h1>
-              <p className="text-gray-600 text-sm mt-1">Welcome back, John Doe</p>
+            <div className="flex items-center space-x-3">
+              {/* Mobile Menu Button */}
+              <button 
+                onClick={() => setMobileMenuOpen(true)}
+                className="md:hidden hover:bg-gray-100 p-2 rounded -ml-2"
+              >
+                <Menu className="h-6 w-6 text-gray-600" />
+              </button>
+              <div>
+                <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Student Portal</h1>
+                <p className="text-gray-600 text-xs md:text-sm mt-1 hidden sm:block">Welcome back, John Doe</p>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 hover:bg-gray-100">
+            <div className="flex items-center space-x-2 md:space-x-4">
+              <button className="relative p-2 hover:bg-gray-100 rounded">
                 <Bell className="h-5 w-5 text-gray-600" />
                 <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
               </button>
@@ -505,12 +517,12 @@ const StudentDashboard = ({ onLogout }) => {
         </header>
 
         {/* Content Container */}
-        <div className="p-8">
+        <div className="p-4 md:p-6 lg:p-8">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <>
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
                 {stats.map((stat, idx) => {
                   const Icon = stat.icon;
                   return (
@@ -534,38 +546,38 @@ const StudentDashboard = ({ onLogout }) => {
               </div>
 
               {/* Two Column Layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
                 {/* Left Column */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-4 md:space-y-6">
                   {/* Assignments Section */}
                   <div className="bg-white border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-gray-50">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <FileText className="h-5 w-5 text-gray-700" />
-                          <h2 className="text-base font-semibold text-gray-900">Assignments & Tasks</h2>
+                        <div className="flex items-center space-x-2 md:space-x-3">
+                          <FileText className="h-4 w-4 md:h-5 md:w-5 text-gray-700" />
+                          <h2 className="text-sm md:text-base font-semibold text-gray-900">Assignments & Tasks</h2>
                         </div>
-                        <button className="text-gray-900 text-sm font-medium hover:underline">View All</button>
+                        <button className="text-gray-900 text-xs md:text-sm font-medium hover:underline">View All</button>
                       </div>
                     </div>
                     <div className="divide-y divide-gray-200">
                       {assignments.map((assignment, idx) => (
-                        <div key={idx} className="p-4 hover:bg-gray-50 transition-colors">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="font-medium text-gray-900 mb-1">{assignment.title}</h3>
-                              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        <div key={idx} className="p-3 md:p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-gray-900 mb-1 text-sm md:text-base">{assignment.title}</h3>
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-xs md:text-sm text-gray-600 gap-1 sm:gap-0">
                                 <span className="flex items-center space-x-1">
-                                  <BookOpen className="h-4 w-4" />
-                                  <span>{assignment.course}</span>
+                                  <BookOpen className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+                                  <span className="truncate">{assignment.course}</span>
                                 </span>
                                 <span className="flex items-center space-x-1">
-                                  <Clock className="h-4 w-4" />
+                                  <Clock className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                                   <span>Due: {assignment.due}</span>
                                 </span>
                               </div>
                             </div>
-                            <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                            <span className="px-2 md:px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 whitespace-nowrap flex-shrink-0">
                               {assignment.status === 'inProgress' ? 'In Progress' : assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
                             </span>
                           </div>
@@ -576,19 +588,19 @@ const StudentDashboard = ({ onLogout }) => {
 
                   {/* News Feed */}
                   <div className="bg-white border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                      <div className="flex items-center space-x-3">
-                        <Bell className="h-5 w-5 text-gray-700" />
-                        <h2 className="text-base font-semibold text-gray-900">Campus News</h2>
+                    <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-gray-50">
+                      <div className="flex items-center space-x-2 md:space-x-3">
+                        <Bell className="h-4 w-4 md:h-5 md:w-5 text-gray-700" />
+                        <h2 className="text-sm md:text-base font-semibold text-gray-900">Campus News</h2>
                       </div>
                     </div>
                     <div className="divide-y divide-gray-200">
                       {recentNews.map((news, idx) => (
-                        <div key={idx} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                        <div key={idx} className="p-3 md:p-4 hover:bg-gray-50 transition-colors cursor-pointer">
                           <div className="flex items-start space-x-3">
-                            <div className="flex-1">
-                              <h3 className="font-medium text-gray-900 mb-1">{news.headline}</h3>
-                              <div className="flex items-center space-x-3 text-xs text-gray-600">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-gray-900 mb-1 text-sm md:text-base">{news.headline}</h3>
+                              <div className="flex items-center flex-wrap gap-2 text-xs text-gray-600">
                                 <span className="bg-gray-100 text-gray-700 px-2 py-1 font-medium border border-gray-200">
                                   {news.category}
                                 </span>
@@ -598,7 +610,7 @@ const StudentDashboard = ({ onLogout }) => {
                                 </span>
                               </div>
                             </div>
-                            <ArrowRight className="h-5 w-5 text-gray-400" />
+                            <ArrowRight className="h-4 w-4 md:h-5 md:w-5 text-gray-400 flex-shrink-0" />
                           </div>
                         </div>
                       ))}
@@ -607,32 +619,32 @@ const StudentDashboard = ({ onLogout }) => {
                 </div>
 
                 {/* Right Column */}
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                   {/* Upcoming Events */}
                   <div className="bg-white border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                      <div className="flex items-center space-x-3">
-                        <CalendarDays className="h-5 w-5 text-gray-700" />
-                        <h2 className="text-base font-semibold text-gray-900">Upcoming Events</h2>
+                    <div className="px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 bg-gray-50">
+                      <div className="flex items-center space-x-2 md:space-x-3">
+                        <CalendarDays className="h-4 w-4 md:h-5 md:w-5 text-gray-700" />
+                        <h2 className="text-sm md:text-base font-semibold text-gray-900">Upcoming Events</h2>
                       </div>
                     </div>
-                    <div className="p-4 space-y-3">
+                    <div className="p-3 md:p-4 space-y-3">
                       {upcomingEvents.map((event, idx) => (
                         <div key={idx} className="p-3 bg-gray-50 border border-gray-200 hover:border-gray-900 transition-all">
-                          <div className="flex items-start justify-between mb-2">
-                            <h3 className="font-medium text-gray-900 text-sm">{event.title}</h3>
-                            <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <h3 className="font-medium text-gray-900 text-xs md:text-sm flex-1">{event.title}</h3>
+                            <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 whitespace-nowrap flex-shrink-0">
                               {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
                             </span>
                           </div>
                           <div className="space-y-1 text-xs text-gray-600">
                             <p className="flex items-center space-x-2">
-                              <CalendarDays className="h-3 w-3" />
+                              <CalendarDays className="h-3 w-3 flex-shrink-0" />
                               <span>{event.date} at {event.time}</span>
                             </p>
                             <p className="flex items-center space-x-2">
-                              <User className="h-3 w-3" />
-                              <span>{event.location}</span>
+                              <User className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{event.location}</span>
                             </p>
                           </div>
                         </div>
@@ -710,23 +722,23 @@ const StudentDashboard = ({ onLogout }) => {
 
           {/* Profile Update Tab */}
           {activeTab === 'profile' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
             <div className="lg:col-span-2">
-              <div className="bg-white border border-gray-200 p-8">
-                <div className="flex items-center space-x-3 mb-6">
-                  <User className="h-6 w-6 text-gray-700" />
-                  <h2 className="text-xl font-semibold text-gray-900">Update Profile</h2>
+              <div className="bg-white border border-gray-200 p-4 md:p-6 lg:p-8">
+                <div className="flex items-center space-x-2 md:space-x-3 mb-4 md:mb-6">
+                  <User className="h-5 w-5 md:h-6 md:w-6 text-gray-700" />
+                  <h2 className="text-lg md:text-xl font-semibold text-gray-900">Update Profile</h2>
                 </div>
                 
-                <form onSubmit={handleProfileUpdate} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form onSubmit={handleProfileUpdate} className="space-y-4 md:space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                       <input
                         type="text"
                         value={profileData.name}
                         onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900"
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm md:text-base"
                       />
                     </div>
                     <div>
@@ -735,7 +747,7 @@ const StudentDashboard = ({ onLogout }) => {
                         type="email"
                         value={profileData.email}
                         onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900"
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm md:text-base"
                       />
                     </div>
                     <div>
@@ -744,7 +756,7 @@ const StudentDashboard = ({ onLogout }) => {
                         type="tel"
                         value={profileData.phone}
                         onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900"
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm md:text-base"
                       />
                     </div>
                     <div>
@@ -753,7 +765,7 @@ const StudentDashboard = ({ onLogout }) => {
                         type="text"
                         value={profileData.department}
                         onChange={(e) => setProfileData({...profileData, department: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900"
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm md:text-base"
                       />
                     </div>
                     <div>
@@ -761,7 +773,7 @@ const StudentDashboard = ({ onLogout }) => {
                       <select
                         value={profileData.year}
                         onChange={(e) => setProfileData({...profileData, year: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900"
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm md:text-base"
                       >
                         <option>1st Year</option>
                         <option>2nd Year</option>
@@ -775,7 +787,7 @@ const StudentDashboard = ({ onLogout }) => {
                         type="text"
                         value={profileData.cgpa}
                         onChange={(e) => setProfileData({...profileData, cgpa: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900"
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm md:text-base"
                       />
                     </div>
                   </div>
@@ -786,19 +798,19 @@ const StudentDashboard = ({ onLogout }) => {
                       value={profileData.skills}
                       onChange={(e) => setProfileData({...profileData, skills: e.target.value})}
                       rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900"
+                      className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm md:text-base"
                       placeholder="e.g., React, Node.js, Python"
                     ></textarea>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn Profile</label>
                       <input
                         type="url"
                         value={profileData.linkedin}
                         onChange={(e) => setProfileData({...profileData, linkedin: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900"
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm md:text-base"
                       />
                     </div>
                     <div>
@@ -807,14 +819,14 @@ const StudentDashboard = ({ onLogout }) => {
                         type="url"
                         value={profileData.github}
                         onChange={(e) => setProfileData({...profileData, github: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900"
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm md:text-base"
                       />
                     </div>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-3 transition-all"
+                    className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 md:py-3 transition-all text-sm md:text-base"
                   >
                     Save Changes
                   </button>
@@ -822,51 +834,51 @@ const StudentDashboard = ({ onLogout }) => {
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Upload Resume */}
-              <div className="bg-white border border-gray-200 p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Upload className="h-5 w-5 text-gray-700" />
-                  <h3 className="text-base font-semibold text-gray-900">Upload Resume</h3>
+              <div className="bg-white border border-gray-200 p-4 md:p-6">
+                <div className="flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4">
+                  <Upload className="h-4 w-4 md:h-5 md:w-5 text-gray-700" />
+                  <h3 className="text-sm md:text-base font-semibold text-gray-900">Upload Resume</h3>
                 </div>
-                <div className="border-2 border-dashed border-gray-300 p-8 text-center hover:border-gray-900 transition-colors cursor-pointer">
-                  <Upload className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-gray-700">Click to upload or drag and drop</p>
+                <div className="border-2 border-dashed border-gray-300 p-6 md:p-8 text-center hover:border-gray-900 transition-colors cursor-pointer">
+                  <Upload className="h-8 w-8 md:h-10 md:w-10 text-gray-400 mx-auto mb-2 md:mb-3" />
+                  <p className="text-xs md:text-sm font-medium text-gray-700">Click to upload or drag and drop</p>
                   <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX (MAX. 5MB)</p>
                 </div>
-                <button className="w-full mt-4 bg-gray-900 hover:bg-gray-800 text-white font-medium py-2">
+                <button className="w-full mt-3 md:mt-4 bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 text-sm md:text-base">
                   Upload Resume
                 </button>
               </div>
 
               {/* Upload Certificates */}
-              <div className="bg-white border border-gray-200 p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <FileText className="h-5 w-5 text-gray-700" />
-                  <h3 className="text-base font-semibold text-gray-900">Certificates</h3>
+              <div className="bg-white border border-gray-200 p-4 md:p-6">
+                <div className="flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4">
+                  <FileText className="h-4 w-4 md:h-5 md:w-5 text-gray-700" />
+                  <h3 className="text-sm md:text-base font-semibold text-gray-900">Certificates</h3>
                 </div>
-                <div className="border-2 border-dashed border-gray-300 p-8 text-center hover:border-gray-900 transition-colors cursor-pointer">
-                  <FileText className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-gray-700">Upload Certificates</p>
+                <div className="border-2 border-dashed border-gray-300 p-6 md:p-8 text-center hover:border-gray-900 transition-colors cursor-pointer">
+                  <FileText className="h-8 w-8 md:h-10 md:w-10 text-gray-400 mx-auto mb-2 md:mb-3" />
+                  <p className="text-xs md:text-sm font-medium text-gray-700">Upload Certificates</p>
                   <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG (MAX. 10MB)</p>
                 </div>
-                <button className="w-full mt-4 bg-gray-900 hover:bg-gray-800 text-white font-medium py-2">
+                <button className="w-full mt-3 md:mt-4 bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 text-sm md:text-base">
                   Add Certificate
                 </button>
               </div>
 
               {/* Achievements */}
-              <div className="bg-white border border-gray-200 p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Trophy className="h-5 w-5 text-gray-700" />
-                  <h3 className="text-base font-semibold text-gray-900">Achievements</h3>
+              <div className="bg-white border border-gray-200 p-4 md:p-6">
+                <div className="flex items-center space-x-2 md:space-x-3 mb-3 md:mb-4">
+                  <Trophy className="h-4 w-4 md:h-5 md:w-5 text-gray-700" />
+                  <h3 className="text-sm md:text-base font-semibold text-gray-900">Achievements</h3>
                 </div>
                 <textarea
                   rows="4"
                   placeholder="Add your achievements, awards, or recognitions..."
-                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900"
+                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm md:text-base"
                 ></textarea>
-                <button className="w-full mt-4 bg-gray-900 hover:bg-gray-800 text-white font-medium py-2">
+                <button className="w-full mt-3 md:mt-4 bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 text-sm md:text-base">
                   Save Achievements
                 </button>
               </div>
@@ -879,35 +891,35 @@ const StudentDashboard = ({ onLogout }) => {
             <div className="h-full flex flex-col">
               {!gmailConnected ? (
                 // Gmail Connection Screen
-                <div className="bg-white border border-gray-200 p-12 text-center">
+                <div className="bg-white border border-gray-200 p-6 md:p-8 lg:p-12 text-center">
                   <div className="max-w-md mx-auto">
-                    <div className="h-20 w-20 bg-gray-100 border border-gray-300 mx-auto mb-6 flex items-center justify-center">
-                      <Mail className="h-10 w-10 text-gray-700" />
+                    <div className="h-16 w-16 md:h-20 md:w-20 bg-gray-100 border border-gray-300 mx-auto mb-4 md:mb-6 flex items-center justify-center">
+                      <Mail className="h-8 w-8 md:h-10 md:w-10 text-gray-700" />
                     </div>
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-3">Connect Your Gmail</h2>
-                    <p className="text-gray-600 mb-6">
+                    <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2 md:mb-3">Connect Your Gmail</h2>
+                    <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
                       Connect your Gmail account to access your emails directly from CampusConnect. 
                       Our AI will automatically categorize your emails into Academic, Career, Events, and more.
                     </p>
-                    <div className="bg-gray-50 border border-gray-200 p-4 mb-6 text-left">
+                    <div className="bg-gray-50 border border-gray-200 p-3 md:p-4 mb-4 md:mb-6 text-left">
                       <div className="flex items-start space-x-3 mb-3">
-                        <Sparkles className="h-5 w-5 text-gray-700 flex-shrink-0 mt-0.5" />
+                        <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-gray-700 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium text-gray-900 text-sm mb-1">AI-Powered Categorization</p>
+                          <p className="font-medium text-gray-900 text-xs md:text-sm mb-1">AI-Powered Categorization</p>
                           <p className="text-xs text-gray-600">Automatically sorts emails into relevant categories</p>
                         </div>
                       </div>
                       <div className="flex items-start space-x-3 mb-3">
-                        <Tag className="h-5 w-5 text-gray-700 flex-shrink-0 mt-0.5" />
+                        <Tag className="h-4 w-4 md:h-5 md:w-5 text-gray-700 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium text-gray-900 text-sm mb-1">Smart Labels</p>
+                          <p className="font-medium text-gray-900 text-xs md:text-sm mb-1">Smart Labels</p>
                           <p className="text-xs text-gray-600">Get intelligent tags for quick filtering</p>
                         </div>
                       </div>
                       <div className="flex items-start space-x-3">
-                        <Bell className="h-5 w-5 text-gray-700 flex-shrink-0 mt-0.5" />
+                        <Bell className="h-4 w-4 md:h-5 md:w-5 text-gray-700 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="font-medium text-gray-900 text-sm mb-1">Priority Inbox</p>
+                          <p className="font-medium text-gray-900 text-xs md:text-sm mb-1">Priority Inbox</p>
                           <p className="text-xs text-gray-600">Important emails highlighted automatically</p>
                         </div>
                       </div>
@@ -926,35 +938,38 @@ const StudentDashboard = ({ onLogout }) => {
                 </div>
               ) : (
                 // Gmail Inbox with AI Categories
-                <div className="flex h-full">
-                  {/* Sidebar - Categories */}
-                  <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-                    <div className="p-4 border-b border-gray-200">
+                <div className="flex flex-col md:flex-row h-full">
+                  {/* Sidebar - Categories (Hidden on mobile when email selected) */}
+                  <div className={`
+                    ${selectedEmail ? 'hidden md:flex' : 'flex'}
+                    w-full md:w-64 bg-white border-r border-gray-200 flex-col
+                  `}>
+                    <div className="p-3 md:p-4 border-b border-gray-200">
                       <button
-                        onClick={() => setShowComposeModal(true)}
-                        className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 px-4 flex items-center justify-center space-x-2"
+                        onClick={() => {/* Compose email functionality */}}
+                        className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-2 px-4 flex items-center justify-center space-x-2 text-sm"
                       >
                         <Send className="h-4 w-4" />
                         <span>Compose</span>
                       </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-3">
+                    <div className="flex-1 overflow-y-auto p-2 md:p-3">
                       <div className="space-y-1">
                         {/* All Mails */}
                         <button
                           onClick={() => setEmailFilter('all')}
-                          className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium transition-all ${
+                          className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium transition-all rounded ${
                             emailFilter === 'all'
                               ? 'bg-gray-900 text-white'
                               : 'text-gray-700 hover:bg-gray-100'
                           }`}
                         >
-                          <div className="flex items-center space-x-3">
-                            <Inbox className="h-4 w-4" />
-                            <span>All Mail</span>
+                          <div className="flex items-center space-x-2 md:space-x-3">
+                            <Inbox className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">All Mail</span>
                           </div>
-                          <span className={`text-xs ${emailFilter === 'all' ? 'text-white' : 'text-gray-500'}`}>
+                          <span className={`text-xs flex-shrink-0 ${emailFilter === 'all' ? 'text-white' : 'text-gray-500'}`}>
                             {categoryStats.all}
                           </span>
                         </button>
@@ -962,7 +977,7 @@ const StudentDashboard = ({ onLogout }) => {
                         {/* Unread */}
                         <button
                           onClick={() => setEmailFilter('unread')}
-                          className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium transition-all ${
+                          className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium transition-all rounded ${
                             emailFilter === 'unread'
                               ? 'bg-gray-900 text-white'
                               : 'text-gray-700 hover:bg-gray-100'
@@ -1106,20 +1121,23 @@ const StudentDashboard = ({ onLogout }) => {
                   </div>
 
                   {/* Main Content - Email List or Email Detail */}
-                  <div className="flex-1 flex flex-col bg-gray-50">
+                  <div className={`
+                    ${selectedEmail ? 'flex' : 'hidden md:flex'}
+                    flex-1 flex-col bg-gray-50 min-w-0
+                  `}>
                     {!selectedEmail ? (
                       // Email List View
                       <>
-                        <div className="bg-white border-b border-gray-200 p-4">
+                        <div className="bg-white border-b border-gray-200 p-3 md:p-4">
                           <div className="flex items-center justify-between mb-3">
-                            <h2 className="text-lg font-semibold text-gray-900">
+                            <h2 className="text-base md:text-lg font-semibold text-gray-900 truncate">
                               {emailFilter === 'all' ? 'All Mail' : 
                                emailFilter === 'unread' ? 'Unread' :
                                emailFilter === 'important' ? 'Important' :
                                emailFilter.charAt(0).toUpperCase() + emailFilter.slice(1)}
                             </h2>
                             <div className="flex items-center space-x-2">
-                              <span className="text-sm text-gray-600">{filteredMails.length} emails</span>
+                              <span className="text-xs md:text-sm text-gray-600 whitespace-nowrap">{filteredMails.length} emails</span>
                             </div>
                           </div>
                           <div className="relative">
@@ -1129,17 +1147,17 @@ const StudentDashboard = ({ onLogout }) => {
                               placeholder="Search emails..."
                               value={searchQuery}
                               onChange={(e) => setSearchQuery(e.target.value)}
-                              className="w-full pl-10 pr-4 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm"
+                              className="w-full pl-10 pr-4 py-2 border border-gray-300 focus:outline-none focus:border-gray-900 text-sm rounded"
                             />
                           </div>
                         </div>
 
                         <div className="flex-1 overflow-y-auto">
                           {filteredMails.length === 0 ? (
-                            <div className="p-12 text-center">
-                              <Mail className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                              <p className="text-gray-600 font-medium">No emails found</p>
-                              <p className="text-sm text-gray-500 mt-1">Try adjusting your filters</p>
+                            <div className="p-8 md:p-12 text-center">
+                              <Mail className="h-12 md:h-16 w-12 md:w-16 text-gray-300 mx-auto mb-4" />
+                              <p className="text-gray-600 font-medium text-sm md:text-base">No emails found</p>
+                              <p className="text-xs md:text-sm text-gray-500 mt-1">Try adjusting your filters</p>
                             </div>
                           ) : (
                             <div className="divide-y divide-gray-200 bg-white">
@@ -1150,14 +1168,14 @@ const StudentDashboard = ({ onLogout }) => {
                                     setSelectedEmail(mail);
                                     if (mail.unread) markAsRead(mail.id);
                                   }}
-                                  className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                                  className={`p-3 md:p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
                                     mail.unread ? 'bg-blue-50 border-l-4 border-l-gray-900' : ''
                                   }`}
                                 >
-                                  <div className="flex items-start justify-between">
+                                  <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center space-x-2 mb-1">
-                                        <p className={`text-sm truncate ${
+                                        <p className={`text-xs md:text-sm truncate ${
                                           mail.unread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'
                                         }`}>
                                           {mail.fromName}
@@ -1166,31 +1184,31 @@ const StudentDashboard = ({ onLogout }) => {
                                           <span className="flex-shrink-0 h-2 w-2 bg-gray-900 rounded-full"></span>
                                         )}
                                       </div>
-                                      <h3 className={`text-sm mb-1 truncate ${
+                                      <h3 className={`text-xs md:text-sm mb-1 truncate ${
                                         mail.unread ? 'font-medium text-gray-900' : 'text-gray-700'
                                       }`}>
                                         {mail.subject}
                                       </h3>
-                                      <p className="text-xs text-gray-500 truncate mb-2">
+                                      <p className="text-xs text-gray-500 truncate mb-2 hidden sm:block">
                                         {mail.body.substring(0, 100)}...
                                       </p>
-                                      <div className="flex items-center space-x-2 flex-wrap">
-                                        <span className="inline-flex items-center space-x-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium border border-gray-200">
-                                          <Tag className="h-3 w-3" />
-                                          <span>{mail.category}</span>
+                                      <div className="flex items-center gap-1 md:gap-2 flex-wrap">
+                                        <span className="inline-flex items-center space-x-1 px-1.5 md:px-2 py-0.5 md:py-1 bg-gray-100 text-gray-700 text-xs font-medium border border-gray-200 rounded">
+                                          <Tag className="h-3 w-3 flex-shrink-0" />
+                                          <span className="hidden sm:inline">{mail.category}</span>
                                         </span>
-                                        {mail.labels.map((label, idx) => (
-                                          <span key={idx} className="px-2 py-1 bg-gray-50 text-gray-600 text-xs border border-gray-200">
+                                        {mail.labels.slice(0, 2).map((label, idx) => (
+                                          <span key={idx} className="px-1.5 md:px-2 py-0.5 md:py-1 bg-gray-50 text-gray-600 text-xs border border-gray-200 rounded hidden sm:inline">
                                             {label}
                                           </span>
                                         ))}
                                         {mail.important && (
-                                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                                          <Star className="h-3 w-3 md:h-4 md:w-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
                                         )}
                                       </div>
                                     </div>
-                                    <div className="ml-4 flex-shrink-0 text-right">
-                                      <p className="text-xs text-gray-500 mb-2">{mail.time}</p>
+                                    <div className="flex flex-col items-end gap-2">
+                                      <p className="text-xs text-gray-500 whitespace-nowrap">{mail.time}</p>
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -1213,35 +1231,35 @@ const StudentDashboard = ({ onLogout }) => {
                     ) : (
                       // Email Detail View
                       <div className="flex-1 flex flex-col bg-white">
-                        <div className="border-b border-gray-200 p-4">
+                        <div className="border-b border-gray-200 p-3 md:p-4">
                           <button
                             onClick={() => setSelectedEmail(null)}
-                            className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 mb-4"
+                            className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 mb-3 md:mb-4"
                           >
                             <ArrowRight className="h-4 w-4 rotate-180" />
                             <span>Back to inbox</span>
                           </button>
                           
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                              <h2 className="text-xl font-semibold text-gray-900 mb-2">{selectedEmail.subject}</h2>
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                            <div className="flex-1 min-w-0">
+                              <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 break-words">{selectedEmail.subject}</h2>
                               <div className="flex items-center space-x-3">
-                                <div className="h-10 w-10 bg-gray-900 text-white flex items-center justify-center font-semibold">
+                                <div className="h-10 w-10 bg-gray-900 text-white flex items-center justify-center font-semibold flex-shrink-0">
                                   {selectedEmail.fromName.charAt(0)}
                                 </div>
-                                <div>
-                                  <p className="font-medium text-gray-900">{selectedEmail.fromName}</p>
-                                  <p className="text-sm text-gray-600">{selectedEmail.from}</p>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium text-gray-900 text-sm truncate">{selectedEmail.fromName}</p>
+                                  <p className="text-xs md:text-sm text-gray-600 truncate">{selectedEmail.from}</p>
                                 </div>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-sm text-gray-600 mb-2">{selectedEmail.time}</p>
+                            <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
+                              <p className="text-xs md:text-sm text-gray-600 whitespace-nowrap">{selectedEmail.time}</p>
                               <button
                                 onClick={() => toggleImportant(selectedEmail.id)}
                                 className="hover:bg-gray-100 p-2 rounded"
                               >
-                                <Star className={`h-5 w-5 ${
+                                <Star className={`h-4 w-4 md:h-5 md:w-5 ${
                                   selectedEmail.important ? 'text-yellow-500 fill-yellow-500' : 'text-gray-400'
                                 }`} />
                               </button>
@@ -1262,7 +1280,7 @@ const StudentDashboard = ({ onLogout }) => {
                           </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6">
+                        <div className="flex-1 overflow-y-auto p-4 md:p-6">
                           <div className="prose prose-sm max-w-none">
                             <pre className="whitespace-pre-wrap font-sans text-gray-700 text-sm leading-relaxed">
                               {selectedEmail.body}
@@ -1270,23 +1288,23 @@ const StudentDashboard = ({ onLogout }) => {
                           </div>
                         </div>
 
-                        <div className="border-t border-gray-200 p-4 bg-gray-50">
-                          <div className="flex items-center space-x-2">
-                            <button className="flex items-center space-x-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm">
+                        <div className="border-t border-gray-200 p-3 md:p-4 bg-gray-50">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button className="flex items-center space-x-2 px-3 md:px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded">
                               <Reply className="h-4 w-4" />
-                              <span>Reply</span>
+                              <span className="hidden sm:inline">Reply</span>
                             </button>
-                            <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium text-sm">
+                            <button className="flex items-center space-x-2 px-3 md:px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium text-sm rounded">
                               <Send className="h-4 w-4" />
-                              <span>Forward</span>
+                              <span className="hidden sm:inline">Forward</span>
                             </button>
                             {selectedEmail.unread && (
                               <button
                                 onClick={() => markAsRead(selectedEmail.id)}
-                                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium text-sm"
+                                className="flex items-center space-x-2 px-3 md:px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium text-sm rounded"
                               >
                                 <Eye className="h-4 w-4" />
-                                <span>Mark as Read</span>
+                                <span className="hidden sm:inline">Mark as Read</span>
                               </button>
                             )}
                           </div>
@@ -1301,54 +1319,54 @@ const StudentDashboard = ({ onLogout }) => {
 
           {/* Placements & Internships Tab */}
           {activeTab === 'placements' && (
-            <div className="space-y-6">
-            <div className="bg-white border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <Briefcase className="h-6 w-6 text-gray-700" />
-                  <h2 className="text-xl font-semibold text-gray-900">Placements & Internships</h2>
+            <div className="space-y-4 md:space-y-6">
+            <div className="bg-white border border-gray-200 p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+                <div className="flex items-center space-x-2 md:space-x-3">
+                  <Briefcase className="h-5 w-5 md:h-6 md:w-6 text-gray-700" />
+                  <h2 className="text-lg md:text-xl font-semibold text-gray-900">Placements & Internships</h2>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button className="px-4 py-2 border border-gray-300 font-medium hover:bg-gray-50 text-sm">
+                  <button className="px-3 md:px-4 py-2 border border-gray-300 font-medium hover:bg-gray-50 text-xs md:text-sm">
                     Filter
                   </button>
-                  <button className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm">
+                  <button className="px-3 md:px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-xs md:text-sm">
                     Applied (3)
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {placements.map((placement, idx) => (
                   <div
                     key={idx}
-                    className="border border-gray-300 p-6 hover:border-gray-900 transition-all"
+                    className="border border-gray-300 p-4 md:p-6 hover:border-gray-900 transition-all"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4 flex-1">
-                        <div className="text-3xl">{placement.logo}</div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">{placement.company}</h3>
-                            <span className={`px-2 py-1 text-xs font-medium border ${
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="flex items-start space-x-3 md:space-x-4 flex-1 min-w-0">
+                        <div className="text-2xl md:text-3xl flex-shrink-0">{placement.logo}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 className="text-base md:text-lg font-semibold text-gray-900">{placement.company}</h3>
+                            <span className={`px-2 py-1 text-xs font-medium border whitespace-nowrap ${
                               placement.status === 'Open' 
                                 ? 'bg-gray-100 text-gray-700 border-gray-200' 
                                 : 'bg-gray-100 text-gray-700 border-gray-200'
                             }`}>
                               {placement.status}
                             </span>
-                            <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                            <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 whitespace-nowrap">
                               {placement.type}
                             </span>
                           </div>
-                          <p className="text-base font-medium text-gray-900 mb-2">{placement.role}</p>
-                          <div className="flex items-center space-x-6 text-sm text-gray-600">
+                          <p className="text-sm md:text-base font-medium text-gray-900 mb-2">{placement.role}</p>
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 gap-1 sm:gap-0 text-xs md:text-sm text-gray-600">
                             <span className="flex items-center space-x-1">
-                              <TrendingUp className="h-4 w-4" />
+                              <TrendingUp className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                               <span className="font-medium">{placement.package}</span>
                             </span>
                             <span className="flex items-center space-x-1">
-                              <Clock className="h-4 w-4" />
+                              <Clock className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                               <span>Deadline: {placement.deadline}</span>
                             </span>
                           </div>
@@ -1356,7 +1374,7 @@ const StudentDashboard = ({ onLogout }) => {
                       </div>
                       <button 
                         onClick={() => handleApprovalRequest(placement, 'placement')}
-                        className="px-6 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium transition-all flex items-center space-x-2 text-sm"
+                        className="w-full sm:w-auto px-4 md:px-6 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium transition-all flex items-center justify-center space-x-2 text-xs md:text-sm flex-shrink-0"
                       >
                         <CheckCircle2 className="h-4 w-4" />
                         <span>Request Approval</span>
@@ -1371,49 +1389,49 @@ const StudentDashboard = ({ onLogout }) => {
 
           {/* Events & Workshops Tab */}
           {activeTab === 'events' && (
-            <div className="space-y-6">
-            <div className="bg-white border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <CalendarDays className="h-6 w-6 text-gray-700" />
-                  <h2 className="text-xl font-semibold text-gray-900">College Events & Workshops</h2>
+            <div className="space-y-4 md:space-y-6">
+            <div className="bg-white border border-gray-200 p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
+                <div className="flex items-center space-x-2 md:space-x-3">
+                  <CalendarDays className="h-5 w-5 md:h-6 md:w-6 text-gray-700" />
+                  <h2 className="text-lg md:text-xl font-semibold text-gray-900">College Events & Workshops</h2>
                 </div>
-                <button className="px-4 py-2 border border-gray-300 font-medium hover:bg-gray-50 text-sm">
+                <button className="px-3 md:px-4 py-2 border border-gray-300 font-medium hover:bg-gray-50 text-xs md:text-sm">
                   View Calendar
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {collegeEvents.map((event, idx) => (
                   <div
                     key={idx}
-                    className="border border-gray-300 p-6 hover:border-gray-900 transition-all"
+                    className="border border-gray-300 p-4 md:p-6 hover:border-gray-900 transition-all"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
-                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                    <div className="flex items-start justify-between gap-2 mb-3 md:mb-4">
+                      <h3 className="text-base md:text-lg font-semibold text-gray-900 flex-1">{event.title}</h3>
+                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 whitespace-nowrap flex-shrink-0">
                         {event.type}
                       </span>
                     </div>
                     
-                    <p className="text-sm text-gray-600 mb-4">{event.description}</p>
+                    <p className="text-xs md:text-sm text-gray-600 mb-3 md:mb-4">{event.description}</p>
                     
-                    <div className="space-y-2 text-sm text-gray-600">
+                    <div className="space-y-2 text-xs md:text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
-                        <CalendarDays className="h-4 w-4 text-gray-700" />
+                        <CalendarDays className="h-3 w-3 md:h-4 md:w-4 text-gray-700 flex-shrink-0" />
                         <span className="font-medium">{event.date}</span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4 text-gray-700" />
-                        <span>{event.venue}</span>
+                        <User className="h-3 w-3 md:h-4 md:w-4 text-gray-700 flex-shrink-0" />
+                        <span className="truncate">{event.venue}</span>
                       </div>
                     </div>
                     
                     <button 
                       onClick={() => handleApprovalRequest(event, 'event')}
-                      className="w-full mt-4 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium transition-all flex items-center justify-center space-x-2 text-sm"
+                      className="w-full mt-3 md:mt-4 px-3 md:px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium transition-all flex items-center justify-center space-x-2 text-xs md:text-sm"
                     >
-                      <CheckCircle2 className="h-4 w-4" />
+                      <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4" />
                       <span>Request Approval</span>
                     </button>
                     </div>

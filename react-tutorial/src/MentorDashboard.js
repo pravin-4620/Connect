@@ -1,24 +1,20 @@
 import React, { useState } from 'react';
 import {
   Users,
-  MessageSquare,
   Calendar,
   Bell,
   LogOut,
   GraduationCap,
   Menu,
-  ChevronLeft,
   CheckCircle2,
   Clock,
-  FileText,
+  XCircle,
   Briefcase,
   CalendarDays,
   Mail,
   BarChart3,
   User,
   X,
-  XCircle,
-  Award,
   TrendingUp,
   ArrowRight
 } from 'lucide-react';
@@ -28,6 +24,7 @@ const MentorDashboard = ({ onLogout }) => {
   const [toast, setToast] = useState('');
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Sample data
   const stats = [
@@ -297,68 +294,68 @@ const MentorDashboard = ({ onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-300 shadow px-6 py-3 flex items-center space-x-3">
-          <CheckCircle2 className="h-5 w-5 text-gray-700" />
-          <span className="text-sm text-gray-900">{toast}</span>
+        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-300 shadow px-4 md:px-6 py-2 md:py-3 flex items-center space-x-2 md:space-x-3">
+          <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-gray-700" />
+          <span className="text-xs md:text-sm text-gray-900">{toast}</span>
         </div>
       )}
 
       {/* Approval Modal */}
       {showApprovalModal && selectedRequest && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex items-center justify-center p-4">
-          <div className="bg-white shadow-2xl max-w-2xl w-full p-6">
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Review Approval Request</h2>
+          <div className="bg-white shadow-2xl max-w-2xl w-full p-4 md:p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 md:mb-6 pb-3 md:pb-4 border-b border-gray-200">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">Review Approval Request</h2>
               <button onClick={() => setShowApprovalModal(false)}>
                 <X className="h-5 w-5 text-gray-500 hover:text-gray-700" />
               </button>
             </div>
             
-            <div className="mb-6">
-              <div className="flex items-center space-x-4 mb-4">
-                <img src={selectedRequest.studentAvatar} alt={selectedRequest.student} className="h-12 w-12 border border-gray-300" />
-                <div>
-                  <p className="font-semibold text-gray-900">{selectedRequest.student}</p>
-                  <p className="text-sm text-gray-600">
+            <div className="mb-4 md:mb-6">
+              <div className="flex items-center space-x-3 md:space-x-4 mb-3 md:mb-4">
+                <img src={selectedRequest.studentAvatar} alt={selectedRequest.student} className="h-10 w-10 md:h-12 md:w-12 border border-gray-300" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-gray-900 text-sm md:text-base truncate">{selectedRequest.student}</p>
+                  <p className="text-xs md:text-sm text-gray-600 truncate">
                     {selectedRequest.type === 'placement' ? `${selectedRequest.position} at ${selectedRequest.company}` : selectedRequest.title}
                   </p>
                 </div>
               </div>
               
-              <div className="mb-4 p-4 bg-gray-50 border border-gray-200">
+              <div className="mb-3 md:mb-4 p-3 md:p-4 bg-gray-50 border border-gray-200">
                 <p className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">
                   {selectedRequest.type === 'placement' ? 'Placement Application' : 'Event Registration'}
                 </p>
-                <p className="text-base font-semibold text-gray-900 mb-2">
+                <p className="text-sm md:text-base font-semibold text-gray-900 mb-2">
                   {selectedRequest.type === 'placement' ? selectedRequest.company : selectedRequest.title}
                 </p>
-                <p className="text-sm text-gray-600 mb-2"><strong>Applied:</strong> {selectedRequest.appliedDate}</p>
+                <p className="text-xs md:text-sm text-gray-600 mb-2"><strong>Applied:</strong> {selectedRequest.appliedDate}</p>
               </div>
 
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mb-4 md:mb-6">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
                   Student's Reason
                 </label>
-                <div className="p-4 bg-gray-50 border border-gray-200">
-                  <p className="text-sm text-gray-700">{selectedRequest.reason}</p>
+                <div className="p-3 md:p-4 bg-gray-50 border border-gray-200">
+                  <p className="text-xs md:text-sm text-gray-700">{selectedRequest.reason}</p>
                 </div>
               </div>
             </div>
 
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3 sm:gap-0">
               <button
                 onClick={() => handleReject(selectedRequest)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 text-sm flex items-center justify-center space-x-2"
+                className="flex-1 px-3 md:px-4 py-2 border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 text-xs md:text-sm flex items-center justify-center space-x-2"
               >
                 <XCircle className="h-4 w-4" />
                 <span>Reject</span>
               </button>
               <button
                 onClick={() => handleApprove(selectedRequest)}
-                className="flex-1 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm flex items-center justify-center space-x-2"
+                className="flex-1 px-3 md:px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-xs md:text-sm flex items-center justify-center space-x-2"
               >
                 <CheckCircle2 className="h-4 w-4" />
                 <span>Approve</span>
@@ -368,16 +365,32 @@ const MentorDashboard = ({ onLogout }) => {
         </div>
       )}
 
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 transition-all duration-300 flex flex-col">
+      <aside className={`fixed md:static inset-y-0 left-0 w-64 bg-white border-r border-gray-200 transition-all duration-300 flex flex-col z-50 transform ${
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      }`}>
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="h-10 w-10 bg-gray-900 flex items-center justify-center">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
             <span className="font-semibold text-gray-900 text-base">CampusConnect</span>
           </div>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="md:hidden text-gray-500 hover:text-gray-700"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Sidebar Navigation */}
@@ -395,7 +408,10 @@ const MentorDashboard = ({ onLogout }) => {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setMobileMenuOpen(false);
+                  }}
                   className={`w-full flex items-center space-x-3 px-4 py-3 font-medium transition-all ${
                     activeTab === item.id
                       ? 'bg-gray-900 text-white'
@@ -438,13 +454,21 @@ const MentorDashboard = ({ onLogout }) => {
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         {/* Top Header Bar */}
-        <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-30">
+        <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 md:py-4 sticky top-0 z-30">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Mentor Portal</h1>
-              <p className="text-gray-600 text-sm mt-1">Welcome back, Prof. Sarah Wilson</p>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="md:hidden hover:bg-gray-100 p-2 rounded -ml-2"
+              >
+                <Menu className="h-5 w-5 text-gray-700" />
+              </button>
+              <div>
+                <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Mentor Portal</h1>
+                <p className="text-gray-600 text-xs md:text-sm mt-1 hidden sm:block">Welcome back, Prof. Sarah Wilson</p>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4">
               <button className="relative p-2 hover:bg-gray-100">
                 <Bell className="h-5 w-5 text-gray-600" />
                 <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
@@ -454,29 +478,29 @@ const MentorDashboard = ({ onLogout }) => {
         </header>
 
         {/* Content Container */}
-        <div className="p-8">
+        <div className="p-4 md:p-6 lg:p-8">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <>
               {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
                 {stats.map((stat, idx) => {
                   const Icon = stat.icon;
                   return (
                     <div
                       key={idx}
-                      className="bg-white p-6 border border-gray-200"
+                      className="bg-white p-4 md:p-6 border border-gray-200"
                     >
-                      <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-start justify-between mb-3 md:mb-4">
                         <div className="p-2 bg-gray-100">
-                          <Icon className="h-5 w-5 text-gray-700" />
+                          <Icon className="h-4 w-4 md:h-5 md:w-5 text-gray-700" />
                         </div>
                         <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1">
                           {stat.change}
                         </span>
                       </div>
-                      <p className="text-2xl font-semibold text-gray-900 mb-1">{stat.value}</p>
-                      <p className="text-sm text-gray-600">{stat.label}</p>
+                      <p className="text-xl md:text-2xl font-semibold text-gray-900 mb-1">{stat.value}</p>
+                      <p className="text-xs md:text-sm text-gray-600">{stat.label}</p>
                     </div>
                   );
                 })}

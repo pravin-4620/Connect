@@ -8,8 +8,7 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  Shield,
-  CheckCircle2
+  Shield
 } from 'lucide-react';
 import StudentDashboard from "../StudentDashboard";
 import MentorDashboard from "../MentorDashboard";

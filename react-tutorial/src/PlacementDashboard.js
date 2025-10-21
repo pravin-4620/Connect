@@ -10,39 +10,17 @@ import {
   X,
   Briefcase,
   FileText,
-  Clock,
-  Target,
   BarChart3,
-  Download,
-  MapPin,
-  DollarSign,
-  ArrowRight,
-  Plus,
-  GraduationCap,
-  ChevronLeft,
   CheckCircle2,
-  XCircle,
   Mail,
   Megaphone,
-  PieChart,
-  Upload,
-  Edit,
-  Trash2,
-  Filter,
-  Eye,
-  Send,
-  Award,
-  TrendingDown
+  PieChart
 } from 'lucide-react';
 
 const PlacementDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [toast, setToast] = useState('');
-  const [showCompanyModal, setShowCompanyModal] = useState(false);
-  const [showDriveModal, setShowDriveModal] = useState(false);
-  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [selectedDrive, setSelectedDrive] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Sample Data
   const stats = [
@@ -192,208 +170,47 @@ const PlacementDashboard = ({ onLogout }) => {
     }
   ];
 
-  const students = [
-    {
-      name: 'Alex Johnson',
-      rollNo: '21CSE089',
-      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-      department: 'Computer Science',
-      year: '4th Year',
-      gpa: 8.4,
-      email: 'alex.j@college.edu',
-      phone: '+91 98765 43210',
-      skills: 'React, Node.js, Python, ML',
-      placementStatus: 'Placed',
-      company: 'Google',
-      package: '₹18 LPA',
-      applications: 8
-    },
-    {
-      name: 'Sarah Williams',
-      rollNo: '21CSE045',
-      avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-      department: 'Computer Science',
-      year: '4th Year',
-      gpa: 8.7,
-      email: 'sarah.w@college.edu',
-      phone: '+91 98765 43211',
-      skills: 'Java, Spring Boot, AWS',
-      placementStatus: 'Placed',
-      company: 'Microsoft',
-      package: '₹16 LPA',
-      applications: 6
-    },
-    {
-      name: 'Michael Brown',
-      rollNo: '21CSE103',
-      avatar: 'https://randomuser.me/api/portraits/men/46.jpg',
-      department: 'Computer Science',
-      year: '4th Year',
-      gpa: 7.8,
-      email: 'michael.b@college.edu',
-      phone: '+91 98765 43212',
-      skills: 'C++, Data Structures',
-      placementStatus: 'Unplaced',
-      company: '-',
-      package: '-',
-      applications: 3
-    },
-    {
-      name: 'Emily Davis',
-      rollNo: '21CSE067',
-      avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
-      department: 'Computer Science',
-      year: '4th Year',
-      gpa: 9.1,
-      email: 'emily.d@college.edu',
-      phone: '+91 98765 43213',
-      skills: 'Python, TensorFlow, AI',
-      placementStatus: 'Placed',
-      company: 'Amazon',
-      package: '₹20 LPA',
-      applications: 10
-    }
-  ];
-
-  const applications = [
-    {
-      id: 1,
-      student: 'Alex Johnson',
-      studentAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-      rollNo: '21CSE089',
-      company: 'Google',
-      position: 'Software Engineer',
-      appliedDate: 'Oct 18, 2025',
-      status: 'Pending',
-      gpa: 8.4
-    },
-    {
-      id: 2,
-      student: 'Sarah Williams',
-      studentAvatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-      rollNo: '21CSE045',
-      company: 'Microsoft',
-      position: 'Cloud Engineer',
-      appliedDate: 'Oct 19, 2025',
-      status: 'Approved',
-      gpa: 8.7
-    },
-    {
-      id: 3,
-      student: 'Emily Davis',
-      studentAvatar: 'https://randomuser.me/api/portraits/women/68.jpg',
-      rollNo: '21CSE067',
-      company: 'Amazon',
-      position: 'SDE Intern',
-      appliedDate: 'Oct 20, 2025',
-      status: 'Pending',
-      gpa: 9.1
-    }
-  ];
-
-  const placementAnalytics = {
-    departmentWise: [
-      { department: 'Computer Science', total: 180, placed: 165, percentage: 92 },
-      { department: 'Electronics', total: 150, placed: 125, percentage: 83 },
-      { department: 'Mechanical', total: 120, placed: 98, percentage: 82 },
-      { department: 'Civil', total: 100, placed: 75, percentage: 75 }
-    ],
-    companyWise: [
-      { company: 'Google', hired: 5, avgPackage: '₹18 LPA' },
-      { company: 'Microsoft', hired: 8, avgPackage: '₹16 LPA' },
-      { company: 'Amazon', hired: 12, avgPackage: '₹15 LPA' },
-      { company: 'TCS', hired: 50, avgPackage: '₹3.5 LPA' },
-      { company: 'Infosys', hired: 45, avgPackage: '₹4 LPA' }
-    ],
-    salaryTrends: [
-      { range: '₹15+ LPA', count: 25 },
-      { range: '₹10-15 LPA', count: 40 },
-      { range: '₹5-10 LPA', count: 80 },
-      { range: '₹3-5 LPA', count: 95 }
-    ]
-  };
-
-  const announcements = [
-    {
-      id: 1,
-      title: 'Google Campus Drive - Nov 15',
-      message: 'Google India will be conducting an on-campus drive. Eligible students must register by Nov 10.',
-      date: 'Oct 20, 2025',
-      priority: 'High'
-    },
-    {
-      id: 2,
-      title: 'Resume Building Workshop',
-      message: 'A mandatory workshop on resume building will be conducted on Oct 25. All final year students must attend.',
-      date: 'Oct 19, 2025',
-      priority: 'Medium'
-    },
-    {
-      id: 3,
-      title: 'Placement Registration Deadline',
-      message: 'Last date to register for placement season is Oct 30. Students who miss this will not be eligible.',
-      date: 'Oct 18, 2025',
-      priority: 'High'
-    }
-  ];
-
-  const mails = [
-    {
-      from: 'Alex Johnson',
-      subject: 'Application status inquiry - Google',
-      time: '30 mins ago',
-      unread: true,
-      important: true
-    },
-    {
-      from: 'Google HR',
-      subject: 'Campus drive schedule confirmation',
-      time: '2 hours ago',
-      unread: true,
-      important: true
-    },
-    {
-      from: 'Sarah Williams',
-      subject: 'Resume verification request',
-      time: '1 day ago',
-      unread: false,
-      important: false
-    }
-  ];
-
   const showToast = (message) => {
     setToast(message);
     setTimeout(() => setToast(''), 3000);
   };
 
-  const handleApproveApplication = (app) => {
-    showToast(`Approved ${app.student}'s application for ${app.company}`);
-  };
-
-  const handleRejectApplication = (app) => {
-    showToast(`Rejected ${app.student}'s application for ${app.company}`);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-300 shadow px-6 py-3 flex items-center space-x-3">
-          <CheckCircle2 className="h-5 w-5 text-gray-700" />
-          <span className="text-sm text-gray-900">{toast}</span>
+        <div className="fixed top-4 right-4 z-50 bg-white border border-gray-300 shadow px-4 md:px-6 py-2 md:py-3 flex items-center space-x-2 md:space-x-3">
+          <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-gray-700" />
+          <span className="text-xs md:text-sm text-gray-900">{toast}</span>
         </div>
       )}
 
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 transition-all duration-300 flex flex-col">
+      <aside className={`fixed md:static inset-y-0 left-0 w-64 bg-white border-r border-gray-200 transition-all duration-300 flex flex-col z-50 transform ${
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      }`}>
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="h-10 w-10 bg-gray-900 flex items-center justify-center">
               <Building2 className="h-6 w-6 text-white" />
             </div>
             <span className="font-semibold text-gray-900 text-base">CampusConnect</span>
           </div>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="md:hidden text-gray-500 hover:text-gray-700"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Sidebar Navigation */}
@@ -413,7 +230,10 @@ const PlacementDashboard = ({ onLogout }) => {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setMobileMenuOpen(false);
+                  }}
                   className={`w-full flex items-center space-x-3 px-4 py-3 font-medium transition-all ${
                     activeTab === item.id
                       ? 'bg-gray-900 text-white'
@@ -437,8 +257,8 @@ const PlacementDashboard = ({ onLogout }) => {
                 alt="Profile"
                 className="h-10 w-10 border border-gray-300"
               />
-              <div>
-                <p className="font-medium text-gray-900 text-sm">Dr. Rajesh Kumar</p>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-gray-900 text-sm truncate">Dr. Rajesh Kumar</p>
                 <p className="text-xs text-gray-600">Placement Officer</p>
               </div>
             </div>
@@ -456,11 +276,19 @@ const PlacementDashboard = ({ onLogout }) => {
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         {/* Top Header Bar */}
-        <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-30">
+        <header className="bg-white border-b border-gray-200 px-4 md:px-8 py-3 md:py-4 sticky top-0 z-30">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Placement Cell Portal</h1>
-              <p className="text-gray-600 text-sm mt-1">Welcome back, Dr. Rajesh Kumar</p>
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="md:hidden hover:bg-gray-100 p-2 rounded -ml-2"
+              >
+                <Menu className="h-5 w-5 text-gray-700" />
+              </button>
+              <div>
+                <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Placement Officer Portal</h1>
+                <p className="text-gray-600 text-xs md:text-sm mt-1 hidden sm:block">Welcome back, Dr. Rajesh Kumar</p>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <button className="relative p-2 hover:bg-gray-100">
