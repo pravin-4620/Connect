@@ -3,17 +3,11 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import MyForm from './components/MyForm';
-import StudentDash from './StudentDash';
-import Placement from './Placement';
-import Mentor from './Mentor';
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <MyForm />
-    {/* <Placement /> */}
-    {/* {<Mentor /> } */}
-    {/* <StudentDash /> */}
+    <App />
   </React.StrictMode>
 );
 
