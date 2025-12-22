@@ -115,9 +115,11 @@ export const LoadingSpinner = ({ size = 'md', text = 'Loading...', isDark: propI
   );
 };
 
-export default {
+const components = {
   Toast,
   EmptyState,
   SkeletonLoader,
   LoadingSpinner
 };
+
+export default components;

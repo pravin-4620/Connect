@@ -9,8 +9,6 @@ const EmailInbox = ({ onClose, userRole }) => {
   const [emails, setEmails] = useState([]);
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
-  const [gapiInited, setGapiInited] = useState(false);
-  const [gisInited, setGisInited] = useState(false);
   const [tokenClient, setTokenClient] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({});
@@ -95,6 +93,7 @@ const EmailInbox = ({ onClose, userRole }) => {
   };
 
   // Initialize Google API
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const initializeGapi = useCallback(() => {
     if (window.gapi) {
       window.gapi.load('client', async () => {
@@ -103,7 +102,6 @@ const EmailInbox = ({ onClose, userRole }) => {
             apiKey: gmailConfig.API_KEY,
             discoveryDocs: [gmailConfig.DISCOVERY_DOC],
           });
-          setGapiInited(true);
         } catch (error) {
           console.error('Error initializing GAPI:', error);
         }
@@ -111,6 +109,7 @@ const EmailInbox = ({ onClose, userRole }) => {
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   // Initialize Google Identity Services
   const initializeGis = useCallback(() => {
     if (window.google && gmailConfig.CLIENT_ID !== 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
@@ -125,10 +124,10 @@ const EmailInbox = ({ onClose, userRole }) => {
         },
       });
       setTokenClient(client);
-      setGisInited(true);
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (gmailConfig.DEMO_MODE) {
       // Load demo emails
@@ -137,7 +136,7 @@ const EmailInbox = ({ onClose, userRole }) => {
       initializeGapi();
       initializeGis();
     }
-  }, [initializeGapi, initializeGis]);
+  }, []);
 
   // Categorize email using AI
   const categorizeEmail = (email) => {
