@@ -19,7 +19,16 @@ const io = socketIo(server, {
 });
 
 // Middleware
-app.use(cors());
+const allowedOrigins = process.env.FRONTEND_URL ? 
+  [process.env.FRONTEND_URL, 'http://localhost:3000'] : 
+  ['http://localhost:3000'];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -124,7 +133,13 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 5001;
 
-server.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📡 WebSocket ready on ws://localhost:${PORT}`);
-});
+// Only listen if not running on Vercel
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  server.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`📡 WebSocket ready on ws://localhost:${PORT}`);
+  });
+}
+
+// Export app for Vercel serverless
+module.exports = app;

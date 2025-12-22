@@ -1,5 +1,5 @@
 // API Service - Handles all backend communication
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 // Helper function to get auth token from localStorage
 const getAuthToken = () => {
