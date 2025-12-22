@@ -1,11 +1,14 @@
 import './App.css';
 import ProfessionalLogin from './components/ProfessionalLogin';
+import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
   return (
-    <div className="App">
-      <ProfessionalLogin />
-    </div>
+    <ThemeProvider>
+      <div className="App">
+        <ProfessionalLogin />
+      </div>
+    </ThemeProvider>
   );
 }
 

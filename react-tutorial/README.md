@@ -1,288 +1,164 @@
-# CampusConnect# CampusConnect
-
-
-
-A modern, full-stack campus management system with separate frontend and backend services.A modern, responsive campus management system built with React and Tailwind CSS. CampusConnect provides separate dashboards for Students, Mentors, and Placement Officers with features including placement management, email integration, and event tracking.
-
-
-
-## Project Structure## Features
-
-
-
-```### 👨‍🎓 Student Dashboard
-
-CampusConnect/- **Overview**: View stats, assignments, news feed, and upcoming events
-
-├── frontend/          # React frontend application- **Profile Management**: Update personal information, upload resume and certificates
-
-│   ├── src/          # React components and source code- **Gmail Integration**: AI-categorized emails (Academic, Career, Events, Social)
-
-│   ├── public/       # Static assets- **Placements & Internships**: Browse opportunities and request mentor approval
-
-│   ├── build/        # Production build files- **Events & Workshops**: Register for college events
-
-│   └── README.md     # Frontend-specific documentation
-
-└── README.md         # This file### 👨‍🏫 Mentor Dashboard
-
-```- **Student Management**: View and manage assigned students
-
-- **Approval System**: Review and approve placement applications and event registrations
-
-## Overview- **Student Information**: Access detailed student profiles and performance
-
-- **Communications**: Manage interactions with students
-
-CampusConnect is a comprehensive campus management platform that provides:
-
-### 💼 Placement Officer Dashboard
-
-- **Student Dashboard**: Personal profile, placements, events, and Gmail integration- **Company Management**: Track recruiting companies
-
-- **Mentor Dashboard**: Student management and approval system- **Placement Drives**: Manage recruitment drives and schedules
-
-- **Placement Officer Dashboard**: Company management, drives, and applications- **Student Database**: Access all student information
-
-- **Professional Login**: Secure authentication system- **Applications**: Review and manage student applications
-
-- **Analytics & Reports**: Generate placement statistics
-
-## Technology Stack- **Announcements**: Send notifications to students
-
-
-
-### Frontend## Tech Stack
-
-- **React 18** - Modern UI library
-
-- **Tailwind CSS** - Utility-first CSS framework- **Frontend**: React 18
-
-- **Lucide React** - Beautiful icon library- **Styling**: Tailwind CSS
-
-- **Responsive Design** - Mobile-first approach- **Icons**: Lucide React
-
-- **Build Tool**: Create React App
-
-### Future Backend (To be added)
-
-- Backend services will be added in a separate directory## Installation
-
-- API integration for data management
-
-- Authentication and authorization services1. **Clone the repository**
-
-   ```bash
-
-## Getting Started   git clone https://github.com/pravin-4620/CampusConnect.git
-
-   cd CampusConnect
-
-### Frontend Setup   ```
-
-
-
-1. Navigate to the frontend directory:2. **Install dependencies**
-
-   ```bash   ```bash
-
-   cd frontend   npm install
-
-   ```   ```
-
-
-
-2. Install dependencies:3. **Start the development server**
-
-   ```bash   ```bash
-
-   npm install   npm start
-
-   ```   ```
-
-
-
-3. Start the development server:4. **Open in browser**
-
-   ```bash   ```
-
-   npm start   http://localhost:3000
-
-   ```   ```
-
-
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser## Build for Production
-
-
-
-## Development```bash
-
-npm run build
-
-### Frontend Development```
-
-All frontend-related commands should be run from the `frontend/` directory:
-
-This creates an optimized production build in the `build` folder.
-
+# CampusConnect
+
+A modern, full-stack campus management system with real-time synchronization across Student, Mentor, and Placement Officer portals.
+
+## 🚀 Features
+
+### 👨‍🎓 Student Portal
+- Browse and apply for placement opportunities
+- Register for college events
+- View application status with real-time updates
+- Profile management with photo upload
+
+### 👨‍🏫 Mentor Portal  
+- View assigned students
+- Review and approve/reject placement applications
+- Review and approve/reject event registrations
+- Real-time approval notifications
+
+### 💼 Placement Officer Portal
+- Manage companies database
+- Create and manage placement opportunities
+- Schedule placement drives
+- Create and manage events
+- View all applications
+- Assign mentors to students
+
+## 🛠️ Tech Stack
+
+### Frontend
+- React 18
+- Tailwind CSS
+- Lucide React Icons
+- Socket.io Client (Real-time)
+
+### Backend
+- Node.js / Express
+- MongoDB / Mongoose
+- JWT Authentication
+- Socket.io (WebSocket)
+
+## 📦 Quick Start
+
+### Prerequisites
+- Node.js 16+
+- MongoDB (local or Atlas)
+
+### 1. Clone the repository
 ```bash
-
-cd frontend## Responsive Design
-
-
-
-# Start development serverCampusConnect is fully responsive and works seamlessly across:
-
-npm start- 📱 Mobile devices (phones < 640px)
-
-- 📱 Tablets (640px - 1024px)
-
-# Build for production- 💻 Desktops (1024px+)
-
-npm run build
-
-### Mobile Features
-
-# Run tests- Hamburger menu with slide-out navigation
-
-npm test- Touch-friendly buttons (44px minimum)
-
-```- Optimized Gmail interface
-
-- Stacked layouts for easy scrolling
-
-## Features
-
-## Project Structure
-
-### 📱 Fully Responsive
-
-- Mobile-friendly interface (< 640px)```
-
-- Tablet optimized (640px - 1024px)CampusConnect/
-
-- Desktop enhanced (> 1024px)├── public/              # Static files
-
-├── src/
-
-### 🎨 Modern UI/UX│   ├── components/      # Reusable components
-
-- Clean, professional design│   │   └── ProfessionalLogin.js
-
-- Smooth animations and transitions│   ├── App.js          # Main application
-
-- Intuitive navigation│   ├── StudentDashboard.js
-
-- Dark theme support ready│   ├── MentorDashboard.js
-
-│   ├── PlacementDashboard.js
-
-### 🔐 Security Ready│   ├── index.css       # Global styles
-
-- Authentication system in place│   └── index.js        # Entry point
-
-- Role-based access control structure├── package.json
-
-- Secure data handling patterns└── tailwind.config.js  # Tailwind configuration
-
+git clone https://github.com/yourusername/react-tutorial.git
+cd react-tutorial
 ```
 
-## Project Status
+### 2. Setup Backend
+```bash
+cd backend
+npm install
+# Create .env file with:
+# MONGODB_URI=your_mongodb_uri
+# JWT_SECRET=your_jwt_secret
+npm start
+```
 
-## Available Scripts
+### 3. Setup Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
 
-- ✅ Frontend: Complete and responsive
+### 4. Seed Database (Optional)
+```bash
+cd backend
+node seed-data.js
+```
 
-- ⏳ Backend: To be integrated### `npm start`
+## 🔐 Test Credentials
 
-- ⏳ API Integration: PendingRuns the app in development mode at [http://localhost:3000](http://localhost:3000)
+| Portal | Email | Password |
+|--------|-------|----------|
+| **Student** | student@test.com | password123 |
+| **Mentor** | mentor@test.com | password123 |
+| **Placement Officer** | officer@test.com | password123 |
 
-- ⏳ Database: To be configured
+## 📡 API Endpoints
 
-### `npm run build`
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user
 
-## ContributingBuilds the app for production to the `build` folder
+### Placements
+- `GET /api/placements` - Get all placements
+- `POST /api/placements` - Create placement (Officer)
+- `POST /api/placements/:id/apply` - Apply for placement (Student)
+- `GET /api/placements/applications/my` - Get my applications (Student)
+- `GET /api/placements/applications` - Get all applications (Mentor/Officer)
 
+### Events
+- `GET /api/events` - Get all events
+- `POST /api/events` - Create event (Officer)
+- `POST /api/events/:id/register` - Register for event (Student)
+- `GET /api/events/registrations/my` - Get my registrations (Student)
 
+### Approvals
+- `GET /api/approvals` - Get pending approvals (Mentor)
+- `PUT /api/approvals/:id/approve` - Approve request (Mentor)
+- `PUT /api/approvals/:id/reject` - Reject request (Mentor)
 
-1. Fork the repository### `npm test`
+### Companies
+- `GET /api/companies` - Get all companies
+- `POST /api/companies` - Create company (Officer)
 
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)Launches the test runner in interactive watch mode
+## 🔄 Real-time Features
 
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+The application uses WebSockets for real-time synchronization:
+- When a student applies for a placement, mentors see it instantly
+- When a mentor approves/rejects, students see the update immediately
+- When officer creates placements/events, they appear instantly for students
 
-4. Push to the branch (`git push origin feature/AmazingFeature`)## Browser Support
+## 📁 Project Structure
 
-5. Open a Pull Request
+```
+├── backend/
+│   ├── server.js           # Express server + WebSocket
+│   ├── config/             # Database config
+│   ├── middleware/         # Auth middleware
+│   ├── models/             # Mongoose models
+│   ├── routes/             # API routes
+│   └── seed-data.js        # Database seeder
+├── frontend/
+│   ├── src/
+│   │   ├── App.js                 # Main app component
+│   │   ├── StudentDashboard.js    # Student portal
+│   │   ├── MentorDashboard.js     # Mentor portal
+│   │   ├── PlacementDashboard.js  # Officer portal
+│   │   ├── components/            # Shared components
+│   │   └── services/              # API & Socket services
+│   └── public/
+└── README.md
+```
 
-- ✅ Chrome (90+)
+## 🧪 Testing the Flow
 
-## Repository- ✅ Firefox (88+)
+1. **Login as Student** (student@test.com / password123)
+   - Go to "Placements" tab
+   - Click "Apply Now" on any placement
+   - Enter a reason and submit
 
-- ✅ Safari (14+)
+2. **Login as Mentor** (mentor@test.com / password123)
+   - Go to "Approvals" tab
+   - See the student's application
+   - Click "Review" then "Approve" or "Reject"
 
-**GitHub**: [pravin-4620/CampusConnect](https://github.com/pravin-4620/CampusConnect)- ✅ Edge (90+)
+3. **Login as Student again**
+   - Check your applications - status updated!
 
-- ✅ Mobile browsers (iOS 14+, Android 10+)
+4. **Login as Officer** (officer@test.com / password123)
+   - Create new placements/events
+   - View all applications
+   - Manage companies
 
-## License
+## 📝 License
 
-## Contributing
-
-This project is open source and available under the MIT License.
-
-1. Fork the repository
-
-## Contact2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-
-**Pravin** - [@pravin-4620](https://github.com/pravin-4620)4. Push to the branch (`git push origin feature/AmazingFeature`)
-
-5. Open a Pull Request
-
----
-
-## License
-
-**Made with ❤️ for campus management**
-
-This project is open source and available under the MIT License.
-
-## Contact
-
-**Pravin**
-- GitHub: [@pravin-4620](https://github.com/pravin-4620)
-- Repository: [CampusConnect](https://github.com/pravin-4620/CampusConnect)
-
-## Acknowledgments
-
-- Built with [Create React App](https://create-react-app.dev/)
-- Styled with [Tailwind CSS](https://tailwindcss.com/)
-- Icons by [Lucide](https://lucide.dev/)
-
----
-
-**Made with ❤️ for campus management**
-
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT License
