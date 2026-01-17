@@ -36,8 +36,8 @@ export const useSocket = () => {
         socketService.sendMessage(receiverId, content);
     }, []);
 
-    const sendTyping = useCallback((receiverId: string) => {
-        socketService.sendTyping(receiverId);
+    const sendTyping = useCallback((conversationId: string, userId: string, isTyping: boolean = true) => {
+        socketService.sendTyping(conversationId, userId, isTyping);
     }, []);
 
     const listenToMessages = useCallback((callback: (data: any) => void) => {
