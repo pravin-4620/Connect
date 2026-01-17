@@ -1,8 +1,15 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
+// Only initialize OpenAI if API key is provided
+let openai = null;
+if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+    });
+    console.log('✅ OpenAI service initialized');
+} else {
+    console.warn('⚠️  OPENAI_API_KEY not set - AI features will be disabled');
+}
 
 /**
  * Analyze resume using GPT-4
@@ -11,6 +18,23 @@ const openai = new OpenAI({
  */
 export const analyzeResume = async (resumeText) => {
     try {
+        // Check if OpenAI is available
+        if (!openai) {
+            console.warn('OpenAI not configured - returning fallback resume analysis');
+            return {
+                atsScore: 75,
+                missingKeywords: ['Configure OpenAI API key for detailed analysis'],
+                formattingIssues: [],
+                contentSuggestions: {
+                    summary: 'OpenAI API key not configured. Add OPENAI_API_KEY to environment variables for AI-powered resume analysis.',
+                    experience: 'AI analysis unavailable',
+                    education: 'AI analysis unavailable',
+                    skills: 'AI analysis unavailable'
+                },
+                overallFeedback: 'To enable AI-powered resume analysis, please configure your OpenAI API key in the environment variables.'
+            };
+        }
+
         const prompt = `You are an expert ATS (Applicant Tracking System) analyzer and career counselor. Analyze the following resume and provide:
 
 1. ATS Score (0-100): How well the resume would perform in ATS systems
@@ -82,6 +106,12 @@ Provide your response in the following JSON format:
  */
 export const categorizeEmail = async (subject, body) => {
     try {
+        // Check if OpenAI is available
+        if (!openai) {
+            console.warn('OpenAI not configured - using default email category');
+            return 'PERSONAL';
+        }
+
         const emailContent = `Subject: ${subject}\n\nBody: ${body.substring(0, 500)}`;
 
         const prompt = `Categorize the following email into one of these categories:
@@ -136,6 +166,12 @@ Respond with only the category name (PLACEMENT, ACADEMIC, PERSONAL, or SPAM).`;
  */
 export const generateInterviewQuestions = async (jobRole, skills) => {
     try {
+        // Check if OpenAI is available
+        if (!openai) {
+            console.warn('OpenAI not configured - returning empty questions array');
+            return [];
+        }
+
         const prompt = `Generate 10 technical and behavioral interview questions for a ${jobRole} position requiring skills: ${skills.join(', ')}.
 
 Provide questions in the following JSON format:
@@ -181,6 +217,12 @@ Provide questions in the following JSON format:
  */
 export const analyzeStudentPerformance = async (studentData) => {
     try {
+        // Check if OpenAI is available
+        if (!openai) {
+            console.warn('OpenAI not configured - student performance analysis unavailable');
+            return null;
+        }
+
         const { cgpa, skills, testScores, year, department } = studentData;
 
         const prompt = `Analyze the following student's performance and provide personalized recommendations:
