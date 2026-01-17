@@ -1,0 +1,937 @@
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import { success, error } from '../utils/response.js';
+
+const prisma = new PrismaClient();
+
+/**
+ * Generate random password
+ */
+const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+};
+
+/**
+ * Generate username from email
+ */
+const generateUsername = (email) => {
+    return email.split('@')[0];
+};
+
+/**
+ * Create new user
+ */
+export const createUser = async (req, res) => {
+    try {
+        const {
+            email,
+            firstName,
+            lastName,
+            role,
+            phone,
+            // Student specific
+            rollNumber,
+            year,
+            department,
+            // Mentor specific
+            specialization,
+            experienceYears,
+            // Placement Officer specific
+            designation
+        } = req.body;
+
+        if (!email || !firstName || !lastName || !role) {
+            return error(res, 'Email, first name, last name, and role are required', 400);
+        }
+
+        if (!['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER'].includes(role)) {
+            return error(res, 'Invalid role. Must be STUDENT, MENTOR, or PLACEMENT_OFFICER', 400);
+        }
+
+        // Check if user already exists
+        const existingUser = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() }
+        });
+
+        if (existingUser) {
+            return error(res, 'User with this email already exists', 400);
+        }
+
+        // Generate password
+        const password = generatePassword();
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        let user;
+        try {
+            // Create user
+            user = await prisma.user.create({
+                data: {
+                    email: email.toLowerCase(),
+                    passwordHash,
+                    role,
+                    firstName,
+                    lastName,
+                    phone,
+                    isFirstLogin: true
+                }
+            });
+
+            // Create role-specific profile
+            if (role === 'STUDENT') {
+                if (!rollNumber || !year || !department) {
+                    throw new Error('Roll number, year, and department are required for students');
+                }
+
+                // Check if roll number already exists
+                const existingStudent = await prisma.student.findUnique({
+                    where: { rollNumber }
+                });
+
+                if (existingStudent) {
+                    throw new Error('Student with this roll number already exists');
+                }
+
+                await prisma.student.create({
+                    data: {
+                        userId: user.id,
+                        rollNumber,
+                        year: parseInt(year),
+                        department
+                    }
+                });
+            } else if (role === 'MENTOR') {
+                if (!department) {
+                    throw new Error('Department is required for mentors');
+                }
+
+                await prisma.mentor.create({
+                    data: {
+                        userId: user.id,
+                        department,
+                        specialization,
+                        experienceYears: experienceYears ? parseInt(experienceYears) : null
+                    }
+                });
+            } else if (role === 'PLACEMENT_OFFICER') {
+                await prisma.placementOfficer.create({
+                    data: {
+                        userId: user.id,
+                        department: department || null,
+                        designation: designation || null
+                    }
+                });
+            }
+        } catch (error) {
+            // Rollback user creation if profile creation fails
+            if (user) {
+                await prisma.user.delete({ where: { id: user.id } });
+            }
+            throw error; // Re-throw to be caught by outer catch
+        }
+
+        return success(res, {
+            message: 'User created successfully',
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role
+            },
+            credentials: {
+                username: email,
+                password,
+                email: user.email
+            }
+        }, 'User created successfully');
+    } catch (err) {
+        console.error('Create user error:', err);
+        return error(res, 'Failed to create user', 500);
+    }
+};
+
+/**
+     * Update user
+     */
+export const updateUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const {
+            email,
+            firstName,
+            lastName,
+            phone,
+            // Student specific
+            rollNumber,
+            year,
+            department,
+            // Mentor specific
+            specialization,
+            experienceYears,
+            // Placement Officer specific
+            designation
+        } = req.body;
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                student: true,
+                mentor: true,
+                placementOfficer: true
+            }
+        });
+
+        if (!user) {
+            return error(res, 'User not found', 404);
+        }
+
+        // Prepare update data
+        const updateData = {};
+        if (firstName) updateData.firstName = firstName;
+        if (lastName) updateData.lastName = lastName;
+        if (phone) updateData.phone = phone;
+
+        // Update User
+        await prisma.user.update({
+            where: { id: userId },
+            data: updateData
+        });
+
+        // Update Role Specific Data
+        if (user.role === 'STUDENT' && user.student) {
+            const studentUpdate = {};
+            if (year) studentUpdate.year = parseInt(year);
+            if (department) studentUpdate.department = department;
+            // Only update roll number if different (and check uniqueness ideally, but assuming admin knows)
+            if (rollNumber && rollNumber !== user.student.rollNumber) {
+                // Check uniqueness
+                const existing = await prisma.student.findUnique({ where: { rollNumber } });
+                if (existing) return error(res, 'Roll number already exists', 400);
+                studentUpdate.rollNumber = rollNumber;
+            }
+
+            if (Object.keys(studentUpdate).length > 0) {
+                await prisma.student.update({
+                    where: { id: user.student.id },
+                    data: studentUpdate
+                });
+            }
+        } else if (user.role === 'MENTOR' && user.mentor) {
+            const mentorUpdate = {};
+            if (department) mentorUpdate.department = department;
+            if (specialization) mentorUpdate.specialization = specialization;
+            if (experienceYears) mentorUpdate.experienceYears = parseInt(experienceYears);
+
+            if (Object.keys(mentorUpdate).length > 0) {
+                await prisma.mentor.update({
+                    where: { id: user.mentor.id },
+                    data: mentorUpdate
+                });
+            }
+        } else if (user.role === 'PLACEMENT_OFFICER' && user.placementOfficer) {
+            const officerUpdate = {};
+            if (department) officerUpdate.department = department;
+            if (designation) officerUpdate.designation = designation;
+
+            if (Object.keys(officerUpdate).length > 0) {
+                await prisma.placementOfficer.update({
+                    where: { id: user.placementOfficer.id },
+                    data: officerUpdate
+                });
+            }
+        }
+
+        // Return updated user
+        const updatedUser = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                student: true,
+                mentor: true,
+                placementOfficer: true
+            }
+        });
+
+        return success(res, {
+            user: {
+                ...updatedUser,
+                passwordHash: undefined
+            }
+        }, 'User updated successfully');
+
+    } catch (err) {
+        console.error('Update user error:', err);
+        return error(res, 'Failed to update user', 500);
+    }
+};
+
+/**
+ * Get all users with filters
+ */
+export const getUsers = async (req, res) => {
+    try {
+        const { role, search } = req.query;
+
+        const where = {};
+
+        if (role && role !== 'ALL') {
+            where.role = role;
+        }
+
+        if (search) {
+            where.OR = [
+                { email: { contains: search, mode: 'insensitive' } },
+                { firstName: { contains: search, mode: 'insensitive' } },
+                { lastName: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        const users = await prisma.user.findMany({
+            where,
+            include: {
+                student: true,
+                mentor: true,
+                placementOfficer: true
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // Remove password hashes
+        const usersWithoutPasswords = users.map(user => ({
+            ...user,
+            passwordHash: undefined
+        }));
+
+        return success(res, { users: usersWithoutPasswords }, 'Users fetched');
+    } catch (err) {
+        console.error('Get users error:', err);
+        return error(res, 'Failed to fetch users', 500);
+    }
+};
+
+/**
+ * Get user by ID
+ */
+export const getUserById = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                student: true,
+                mentor: true,
+                placementOfficer: true
+            }
+        });
+
+        if (!user) {
+            return error(res, 'User not found', 404);
+        }
+
+        return success(res, {
+            user: {
+                ...user,
+                passwordHash: undefined
+            }
+        }, 'User details fetched');
+    } catch (err) {
+        console.error('Get user by ID error:', err);
+        return error(res, 'Failed to fetch user', 500);
+    }
+};
+
+/**
+ * Create student mapping (assign mentor/placement officer)
+ */
+export const createMapping = async (req, res) => {
+    try {
+        const { studentId, mentorId, placementOfficerId } = req.body;
+
+        if (!studentId) {
+            return error(res, 'Student ID is required', 400);
+        }
+
+        const student = await prisma.student.findUnique({
+            where: { id: studentId }
+        });
+
+        if (!student) {
+            return error(res, 'Student not found', 404);
+        }
+
+        // Validate placement officer assignment (only for year 3-4)
+        if (placementOfficerId && student.year < 3) {
+            return error(res, 'Placement officers can only be assigned to year 3-4 students', 400, {
+                currentYear: student.year
+            });
+        }
+
+        // Verify mentor exists
+        if (mentorId) {
+            const mentor = await prisma.mentor.findUnique({
+                where: { id: mentorId }
+            });
+
+            if (!mentor) {
+                return error(res, 'Mentor not found', 404);
+            }
+        }
+
+        // Verify placement officer exists
+        if (placementOfficerId) {
+            const placementOfficer = await prisma.placementOfficer.findUnique({
+                where: { id: placementOfficerId }
+            });
+
+            if (!placementOfficer) {
+                return error(res, 'Placement officer not found', 404);
+            }
+        }
+
+        // Update student mapping
+        const updated = await prisma.student.update({
+            where: { id: studentId },
+            data: {
+                mentorId: mentorId || student.mentorId,
+                placementOfficerId: placementOfficerId !== undefined ? placementOfficerId : student.placementOfficerId
+            },
+            include: {
+                user: true,
+                mentor: {
+                    include: { user: true }
+                },
+                placementOfficer: {
+                    include: { user: true }
+                }
+            }
+        });
+
+        return success(res, { student: updated }, 'Student mapping updated successfully');
+    } catch (err) {
+        console.error('Create mapping error:', err);
+        return error(res, 'Failed to create mapping', 500);
+    }
+};
+
+/**
+ * Update student mapping
+ */
+export const updateMapping = async (req, res) => {
+    try {
+        const { mappingId } = req.params;
+        const { mentorId, placementOfficerId } = req.body;
+
+        const student = await prisma.student.findUnique({
+            where: { id: mappingId }
+        });
+
+        if (!student) {
+            return error(res, 'Student not found', 404);
+        }
+
+        // Validate placement officer assignment
+        if (placementOfficerId && student.year < 3) {
+            return error(res, 'Placement officers can only be assigned to year 3-4 students', 400);
+        }
+
+        const updated = await prisma.student.update({
+            where: { id: mappingId },
+            data: {
+                mentorId: mentorId !== undefined ? mentorId : student.mentorId,
+                placementOfficerId: placementOfficerId !== undefined ? placementOfficerId : student.placementOfficerId
+            },
+            include: {
+                user: true,
+                mentor: {
+                    include: { user: true }
+                },
+                placementOfficer: {
+                    include: { user: true }
+                }
+            }
+        });
+
+        return success(res, { student: updated }, 'Mapping updated successfully');
+    } catch (err) {
+        console.error('Update mapping error:', err);
+        return error(res, 'Failed to update mapping', 500);
+    }
+};
+
+/**
+ * Get all students with their mappings
+ */
+export const getStudentMappings = async (req, res) => {
+    try {
+        const { year, department, hasMentor, hasPlacementOfficer } = req.query;
+
+        const where = {};
+
+        if (year) {
+            where.year = parseInt(year);
+        }
+
+        if (department) {
+            where.department = department;
+        }
+
+        if (hasMentor === 'true') {
+            where.mentorId = { not: null };
+        } else if (hasMentor === 'false') {
+            where.mentorId = null;
+        }
+
+        if (hasPlacementOfficer === 'true') {
+            where.placementOfficerId = { not: null };
+        } else if (hasPlacementOfficer === 'false') {
+            where.placementOfficerId = null;
+        }
+
+        const students = await prisma.student.findMany({
+            where,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        firstName: true,
+                        lastName: true,
+                        phone: true
+                    }
+                },
+                mentor: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                email: true,
+                                firstName: true,
+                                lastName: true
+                            }
+                        }
+                    }
+                },
+                placementOfficer: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                email: true,
+                                firstName: true,
+                                lastName: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: { rollNumber: 'asc' }
+        });
+
+        return success(res, { students }, 'Student mappings fetched');
+    } catch (err) {
+        console.error('Get student mappings error:', err);
+        return error(res, 'Failed to fetch student mappings', 500);
+    }
+};
+
+/**
+ * Get all mentors
+ */
+export const getMentors = async (req, res) => {
+    try {
+        const mentors = await prisma.mentor.findMany({
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        firstName: true,
+                        lastName: true,
+                        phone: true
+                    }
+                },
+                _count: {
+                    select: { students: true }
+                }
+            },
+            orderBy: {
+                user: { firstName: 'asc' }
+            }
+        });
+
+        return success(res, { mentors }, 'Mentors fetched');
+    } catch (err) {
+        console.error('Get mentors error:', err);
+        return error(res, 'Failed to fetch mentors', 500);
+    }
+};
+
+/**
+ * Get all placement officers
+ */
+export const getPlacementOfficers = async (req, res) => {
+    try {
+        const placementOfficers = await prisma.placementOfficer.findMany({
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        firstName: true,
+                        lastName: true,
+                        phone: true
+                    }
+                },
+                _count: {
+                    select: { students: true }
+                }
+            },
+            orderBy: {
+                user: { firstName: 'asc' }
+            }
+        });
+
+        return success(res, { placementOfficers }, 'Placement officers fetched');
+    } catch (err) {
+        console.error('Get placement officers error:', err);
+        return error(res, 'Failed to fetch placement officers', 500);
+    }
+};
+
+/**
+ * Get system-wide statistics
+ */
+export const getStatistics = async (req, res) => {
+    try {
+        // Count users by role
+        const totalStudents = await prisma.student.count();
+        const totalMentors = await prisma.mentor.count();
+        const totalPlacementOfficers = await prisma.placementOfficer.count();
+        const totalAdmins = await prisma.user.count({ where: { role: 'ADMIN' } });
+
+        // Year-wise student distribution
+        const studentsByYear = await prisma.student.groupBy({
+            by: ['year'],
+            _count: true
+        });
+
+        // Department-wise distribution
+        const studentsByDepartment = await prisma.student.groupBy({
+            by: ['department'],
+            _count: true
+        });
+
+        // Placement statistics
+        const totalPlacements = await prisma.placement.count();
+        const activePlacements = await prisma.placement.count({
+            where: { applicationDeadline: { gte: new Date() } }
+        });
+
+        const totalApplications = await prisma.placementApplication.count();
+        const approvedApplications = await prisma.placementApplication.count({
+            where: { status: 'APPROVED' }
+        });
+
+        // Event statistics
+        const totalEvents = await prisma.event.count();
+        const upcomingEvents = await prisma.event.count({
+            where: {
+                eventDate: { gte: new Date() },
+                status: 'UPCOMING'
+            }
+        });
+
+        // Assignment statistics
+        const totalAssignments = await prisma.assignment.count();
+        const totalSubmissions = await prisma.assignmentSubmission.count();
+
+        // Mapping statistics
+        const studentsWithMentor = await prisma.student.count({
+            where: { mentorId: { not: null } }
+        });
+
+        const studentsWithPlacementOfficer = await prisma.student.count({
+            where: { placementOfficerId: { not: null } }
+        });
+
+        // Recent activity
+        const recentUsers = await prisma.user.findMany({
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                role: true,
+                createdAt: true
+            }
+        });
+
+        return success(res, {
+            users: {
+                totalStudents,
+                totalMentors,
+                totalPlacementOfficers,
+                totalAdmins,
+                total: totalStudents + totalMentors + totalPlacementOfficers + totalAdmins
+            },
+            students: {
+                byYear: studentsByYear,
+                byDepartment: studentsByDepartment,
+                withMentor: studentsWithMentor,
+                withPlacementOfficer: studentsWithPlacementOfficer,
+                unmappedMentors: totalStudents - studentsWithMentor,
+                unmappedPlacementOfficers: totalStudents - studentsWithPlacementOfficer
+            },
+            placements: {
+                total: totalPlacements,
+                active: activePlacements,
+                totalApplications,
+                approvedApplications,
+                placementRate: totalApplications > 0 ? ((approvedApplications / totalApplications) * 100).toFixed(2) : 0
+            },
+            events: {
+                total: totalEvents,
+                upcoming: upcomingEvents
+            },
+            assignments: {
+                total: totalAssignments,
+                totalSubmissions,
+                submissionRate: totalAssignments > 0 ? ((totalSubmissions / totalAssignments) * 100).toFixed(2) : 0
+            },
+            recentUsers
+        }, 'Statistics fetched');
+    } catch (err) {
+        console.error('Get statistics error:', err);
+        return error(res, 'Failed to fetch statistics', 500);
+    }
+};
+
+/**
+ * Delete user
+ */
+export const deleteUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!user) {
+            return error(res, 'User not found', 404);
+        }
+
+        // Prevent deleting admin users
+        if (user.role === 'ADMIN') {
+            return error(res, 'Cannot delete admin users', 403);
+        }
+
+        // Delete user (cascade will handle related records)
+        await prisma.user.delete({
+            where: { id: userId }
+        });
+
+        return success(res, null, 'User deleted successfully');
+    } catch (err) {
+        console.error('Delete user error:', err);
+        return error(res, 'Failed to delete user', 500);
+    }
+};
+
+/**
+ * Bulk assign mentors to students
+ */
+export const bulkAssignMentors = async (req, res) => {
+    try {
+        const { assignments } = req.body; // Array of { studentId, mentorId }
+
+        if (!Array.isArray(assignments) || assignments.length === 0) {
+            return error(res, 'Assignments array is required', 400);
+        }
+
+        const results = [];
+
+        for (const assignment of assignments) {
+            try {
+                const updated = await prisma.student.update({
+                    where: { id: assignment.studentId },
+                    data: { mentorId: assignment.mentorId }
+                });
+                results.push({ studentId: assignment.studentId, success: true });
+            } catch (err) {
+                results.push({ studentId: assignment.studentId, success: false, error: err.message });
+            }
+        }
+
+        return success(res, {
+            message: 'Bulk assignment completed',
+            results
+        }, 'Bulk assignment completed');
+    } catch (err) {
+        console.error('Bulk assign mentors error:', err);
+        return error(res, 'Failed to bulk assign mentors', 500);
+    }
+};
+
+/**
+ * Get system settings
+ */
+export const getSettings = async (req, res) => {
+    try {
+        const settings = await prisma.systemSettings.findMany();
+        const formatted = settings.reduce((acc, curr) => {
+            acc[curr.key] = curr.jsonValue || curr.value;
+            return acc;
+        }, {});
+        return success(res, { settings: formatted }, 'Settings fetched');
+    } catch (err) {
+        console.error('Get settings error:', err);
+        return error(res, 'Failed to fetch settings', 500);
+    }
+};
+
+/**
+ * Update system settings
+ */
+export const updateSettings = async (req, res) => {
+    try {
+        const { settings } = req.body; // Expect key-value object
+
+        if (!settings) return error(res, 'Settings data required', 400);
+
+        for (const [key, value] of Object.entries(settings)) {
+            const isJson = typeof value === 'object' && value !== null;
+            await prisma.systemSettings.upsert({
+                where: { key },
+                update: {
+                    value: isJson ? null : String(value),
+                    jsonValue: isJson ? value : null
+                },
+                create: {
+                    key,
+                    value: isJson ? null : String(value),
+                    jsonValue: isJson ? value : null
+                }
+            });
+        }
+        return success(res, null, 'Settings updated');
+    } catch (err) {
+        console.error('Update settings error:', err);
+        return error(res, 'Failed to update settings', 500);
+    }
+};
+
+/**
+ * Get all announcements
+ */
+export const getAnnouncements = async (req, res) => {
+    try {
+        const announcements = await prisma.announcement.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: {
+                createdBy: {
+                    select: { firstName: true, lastName: true, role: true }
+                }
+            }
+        });
+        return success(res, { announcements }, 'Announcements fetched');
+    } catch (err) {
+        console.error('Get announcements error:', err);
+        return error(res, 'Failed to fetch announcements', 500);
+    }
+};
+
+/**
+ * Create announcement
+ */
+export const createAnnouncement = async (req, res) => {
+    try {
+        const { title, content, targetRole, priority } = req.body;
+
+        const announcement = await prisma.announcement.create({
+            data: {
+                title,
+                content,
+                targetRole: targetRole === 'ALL' ? null : targetRole,
+                priority: priority || 'MEDIUM',
+                createdById: req.userId
+            }
+        });
+
+        return success(res, { announcement }, 'Announcement created');
+    } catch (err) {
+        console.error('Create announcement error:', err);
+        return error(res, 'Failed to create announcement', 500);
+    }
+};
+
+/**
+ * Delete announcement
+ */
+export const deleteAnnouncement = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.announcement.delete({ where: { id } });
+        return success(res, null, 'Announcement deleted');
+    } catch (err) {
+        console.error('Delete announcement error:', err);
+        return error(res, 'Failed to delete announcement', 500);
+    }
+};
+
+/**
+ * Export all user data
+ */
+export const exportUserData = async (req, res) => {
+    try {
+        const users = await prisma.user.findMany({
+            include: {
+                student: true,
+                mentor: true,
+                placementOfficer: true
+            }
+        });
+
+        // Sanitize
+        const sanitized = users.map(u => {
+            const { passwordHash, ...rest } = u;
+            return rest;
+        });
+
+        return success(res, { users: sanitized }, 'Data exported');
+    } catch (err) {
+        console.error('Export data error:', err);
+        return error(res, 'Failed to export data', 500);
+    }
+};
+
+/**
+ * Get system logs
+ */
+export const getSystemLogs = async (req, res) => {
+    try {
+        // Fetch last 100 analytics logs
+        const logs = await prisma.analyticsLog.findMany({
+            take: 100,
+            orderBy: { loggedAt: 'desc' },
+            include: {
+                student: {
+                    select: {
+                        user: { select: { firstName: true, lastName: true } }
+                    }
+                }
+            }
+        });
+        return success(res, { logs }, 'Logs fetched');
+    } catch (err) {
+        console.error('Get logs error:', err);
+        return error(res, 'Failed to fetch logs', 500);
+    }
+};

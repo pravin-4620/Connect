@@ -1,0 +1,146 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff, Lock, Mail, GraduationCap, UserCheck, Briefcase } from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { loginSchema } from '../../utils/validators';
+
+const formSchema = loginSchema.extend({
+    role: z.enum(['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER']),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+const Login = () => {
+    const { login } = useAuth();
+    const navigate = useNavigate();
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            role: 'STUDENT',
+        }
+    });
+
+    const onSubmit = async (data: FormValues) => {
+        try {
+            setError(null);
+            await login(data);
+            switch (data.role) {
+                case 'STUDENT': navigate('/student/dashboard'); break;
+                case 'MENTOR': navigate('/mentor/dashboard'); break;
+                case 'PLACEMENT_OFFICER': navigate('/placement/dashboard'); break;
+            }
+        } catch (err: any) {
+            setError(err?.response?.data?.message || 'Invalid credentials');
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+            <div className="w-full max-w-md space-y-8">
+                <div className="text-center">
+                    <h1 className="text-4xl font-extrabold text-primary mb-2 tracking-tight">CampusConnect</h1>
+                    <p className="text-muted-foreground">Your academic journey, unified.</p>
+                </div>
+
+                <Card className="shadow-lg border-0 ring-1 ring-gray-200">
+                    <CardHeader className="space-y-1">
+                        <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
+                        <CardDescription className="text-center">
+                            Enter your credentials to access your account
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                            {error && (
+                                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive flex items-center justify-center">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Role</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <label className={`flex flex-col items-center justify-center p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${errors.role ? 'border-destructive' : 'border-input'} has-[:checked]:bg-primary/5 has-[:checked]:border-primary`}>
+                                        <input type="radio" value="STUDENT" className="sr-only" {...register('role')} />
+                                        <GraduationCap className="w-6 h-6 mb-1 text-primary" />
+                                        <span className="text-xs font-medium">Student</span>
+                                    </label>
+                                    <label className={`flex flex-col items-center justify-center p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${errors.role ? 'border-destructive' : 'border-input'} has-[:checked]:bg-primary/5 has-[:checked]:border-primary`}>
+                                        <input type="radio" value="MENTOR" className="sr-only" {...register('role')} />
+                                        <UserCheck className="w-6 h-6 mb-1 text-primary" />
+                                        <span className="text-xs font-medium">Mentor</span>
+                                    </label>
+                                    <label className={`flex flex-col items-center justify-center p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${errors.role ? 'border-destructive' : 'border-input'} has-[:checked]:bg-primary/5 has-[:checked]:border-primary`}>
+                                        <input type="radio" value="PLACEMENT_OFFICER" className="sr-only" {...register('role')} />
+                                        <Briefcase className="w-6 h-6 mb-1 text-primary" />
+                                        <span className="text-xs font-medium">Placement</span>
+                                    </label>
+                                </div>
+                                {errors.role && <p className="text-xs text-destructive">{errors.role.message}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Email</label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        {...register('email')}
+                                        type="email"
+                                        className="pl-10"
+                                        placeholder="m@example.com"
+                                    />
+                                </div>
+                                {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium">Password</label>
+                                    <a href="#" className="text-sm font-medium text-primary hover:underline">Forgot password?</a>
+                                </div>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        {...register('password')}
+                                        type={showPassword ? "text" : "password"}
+                                        className="pl-10 pr-10"
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
+                                </div>
+                                {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+                            </div>
+
+                            <Button type="submit" className="w-full" loading={isSubmitting}>
+                                Sign In
+                            </Button>
+                        </form>
+                    </CardContent>
+                    <CardFooter className="flex flex-col space-y-2">
+                        <div className="text-sm text-center text-muted-foreground">
+                            Admin access? <Link to="/admin/login" className="text-primary hover:underline font-medium">Login here</Link>
+                        </div>
+                    </CardFooter>
+                </Card>
+            </div>
+        </div>
+    );
+};
+
+export default Login;

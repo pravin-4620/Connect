@@ -1,0 +1,373 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+  PLACEMENT_OFFICER
+  ADMIN
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum EmailCategory {
+  PLACEMENT
+  ACADEMIC
+  PERSONAL
+  SPAM
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  role              Role
+  firstName         String
+  lastName          String
+  phone             String?
+  profilePicture    String?
+  isFirstLogin      Boolean   @default(true)
+  gmailConnected    Boolean   @default(false)
+  gmailAccessToken  String?
+  gmailRefreshToken String?
+  preferences       Json?     // Stores { emailNotifs, pushNotifs, theme }
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  student          Student?
+  mentor           Mentor?
+  placementOfficer PlacementOfficer?
+  
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  emails           Email[]
+  announcements    Announcement[]
+}
+
+model Student {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  rollNumber          String    @unique
+  year                Int       // 1, 2, 3, or 4
+  department          String
+  cgpa                Float?
+  mentorId            String?
+  placementOfficerId  String?   // Nullable for 1st/2nd year
+  resumeUrl           String?
+  skills              Json?     // Array of skills
+  
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mentor              Mentor?   @relation(fields: [mentorId], references: [id])
+  placementOfficer    PlacementOfficer? @relation(fields: [placementOfficerId], references: [id])
+  
+  assignmentSubmissions AssignmentSubmission[]
+  eventRegistrations    EventRegistration[]
+  placementApplications PlacementApplication[]
+  testAttempts          TestAttempt[]
+  gatePasses            GatePass[]
+  interviews            Interview[]
+  analyticsLogs         AnalyticsLog[]
+  attendanceRecords     AttendanceRecord[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AttendanceRecord {
+  id        String   @id @default(cuid())
+  studentId String
+  date      DateTime
+  status    String   // PRESENT, ABSENT, ON_DUTY, LEAVE
+  
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@unique([studentId, date])
+}
+
+model Mentor {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  department      String
+  specialization  String?
+  experienceYears Int?
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students        Student[]
+  assignments     Assignment[]
+  studyMaterials  StudyMaterial[]
+  approvedGatePasses GatePass[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PlacementOfficer {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  department  String?
+  designation String?
+  
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students    Student[]
+  placements  Placement[]
+  skillsTests SkillsTest[]
+  interviews  Interview[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Assignment {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  mentorId    String
+  dueDate     DateTime
+  attachmentUrl String?
+  
+  mentor      Mentor    @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  submissions AssignmentSubmission[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AssignmentSubmission {
+  id            String    @id @default(cuid())
+  assignmentId  String
+  studentId     String
+  submissionUrl String
+  submittedAt   DateTime  @default(now())
+  grade         Float?
+  feedback      String?
+  
+  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student       Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id              String      @id @default(cuid())
+  title           String
+  description     String
+  eventDate       DateTime
+  location        String?
+  createdById     String      // ID of mentor or placement officer
+  createdByRole   Role        // MENTOR or PLACEMENT_OFFICER
+  maxParticipants Int?
+  status          EventStatus @default(UPCOMING)
+  
+  registrations   EventRegistration[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EventRegistration {
+  id        String         @id @default(cuid())
+  eventId   String
+  studentId String
+  status    ApprovalStatus @default(PENDING)
+  appliedAt DateTime       @default(now())
+  
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, studentId])
+}
+
+model Placement {
+  id                  String    @id @default(cuid())
+  companyName         String
+  jobRole             String
+  package             Float
+  eligibilityCriteria Json      // { minCGPA, allowedYears, departments, skills }
+  placementOfficerId  String
+  driveDate           DateTime
+  applicationDeadline DateTime
+  description         String
+  
+  placementOfficer    PlacementOfficer @relation(fields: [placementOfficerId], references: [id], onDelete: Cascade)
+  applications        PlacementApplication[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PlacementApplication {
+  id          String         @id @default(cuid())
+  placementId String
+  studentId   String
+  status      ApprovalStatus @default(PENDING)
+  appliedAt   DateTime       @default(now())
+  
+  placement   Placement @relation(fields: [placementId], references: [id], onDelete: Cascade)
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  @@unique([placementId, studentId])
+}
+
+model SkillsTest {
+  id              String    @id @default(cuid())
+  title           String
+  description     String
+  durationMinutes Int
+  totalMarks      Int
+  questions       Json      // Array of question objects
+  createdById     String
+  
+  createdBy       PlacementOfficer @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  attempts        TestAttempt[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TestAttempt {
+  id          String   @id @default(cuid())
+  testId      String
+  studentId   String
+  score       Float
+  answers     Json     // Student's answers
+  attemptedAt DateTime @default(now())
+  
+  test        SkillsTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+  student     Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model GatePass {
+  id           String         @id @default(cuid())
+  studentId    String
+  reason       String
+  fromDate     DateTime
+  toDate       DateTime
+  status       ApprovalStatus @default(PENDING)
+  approvedById String?
+  approvalNote String?
+  
+  student      Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  approvedBy   Mentor? @relation(fields: [approvedById], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StudyMaterial {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String
+  subject     String
+  year        Int
+  uploadedById String
+  
+  uploadedBy  Mentor @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Email {
+  id             String        @id @default(cuid())
+  userId         String
+  gmailMessageId String        @unique
+  subject        String
+  fromEmail      String
+  toEmail        String
+  body           String
+  category       EmailCategory
+  receivedAt     DateTime
+  isRead         Boolean       @default(false)
+  
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String?   // Make content nullable if sending only attachment
+  attachmentUrl String?
+  attachmentType String? // IMAGE, PDF, DOCUMENT, etc.
+  sentAt     DateTime @default(now())
+  isRead     Boolean  @default(false)
+  
+  sender     User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  createdById String
+  targetRole  Role?    // If null, targets ALL
+  priority    Priority @default(MEDIUM)
+  
+  createdBy   User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Interview {
+  id                 String   @id @default(cuid())
+  studentId          String
+  placementOfficerId String
+  scheduledAt        DateTime
+  type               String   // MOCK or COMPANY
+  feedback           String?
+  status             String   @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  
+  student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  placementOfficer   PlacementOfficer @relation(fields: [placementOfficerId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AnalyticsLog {
+  id         String   @id @default(cuid())
+  studentId  String
+  metricType String   // LOGIN, ASSIGNMENT_SUBMIT, TEST_TAKEN, etc.
+  value      String?
+  loggedAt   DateTime @default(now())
+  
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model SystemSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String?
+  jsonValue Json?
+  updatedAt DateTime @updatedAt
+}
