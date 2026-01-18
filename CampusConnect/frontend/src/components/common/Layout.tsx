@@ -14,6 +14,10 @@ const Layout = () => {
     const { user } = useAuth();
 
     useEffect(() => {
+        // Pre-load notification sound
+        const notificationAudio = new Audio('/notification.mp3');
+        notificationAudio.load();
+
         const handleNotification = (data: any) => {
             toast(data.title || 'Notification', {
                 description: data.message,
@@ -25,12 +29,22 @@ const Layout = () => {
             if (data.senderId === user?.id) return;
 
             // Play notification sound
-            try {
-                const audio = new Audio('/notification.mp3');
-                audio.play().catch(e => console.error('Audio play failed:', e));
-            } catch (error) {
-                console.error('Audio setup failed:', error);
-            }
+            const playSound = async () => {
+                try {
+                    const audio = new Audio('/notification.mp3');
+                    audio.volume = 0.5; // Set volume to 50%
+                    await audio.play();
+                } catch (error: any) {
+                    // Browser blocked autoplay - this is normal
+                    if (error.name === 'NotAllowedError') {
+                        console.log('Notification sound blocked by browser. User interaction required.');
+                    } else {
+                        console.error('Audio play failed:', error);
+                    }
+                }
+            };
+
+            playSound();
 
             // Show toast notification
             const senderName = data.sender?.firstName ? `${data.sender.firstName} ${data.sender.lastName || ''}` : 'Someone';
