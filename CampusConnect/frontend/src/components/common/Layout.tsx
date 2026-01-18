@@ -24,6 +24,14 @@ const Layout = () => {
             // Ignore own messages
             if (data.senderId === user?.id) return;
 
+            // Play notification sound
+            try {
+                const audio = new Audio('/notification.mp3');
+                audio.play().catch(e => console.error('Audio play failed:', e));
+            } catch (error) {
+                console.error('Audio setup failed:', error);
+            }
+
             // Show toast notification
             const senderName = data.sender?.firstName ? `${data.sender.firstName} ${data.sender.lastName || ''}` : 'Someone';
             toast.info(`New Message from ${senderName}`, {
