@@ -24,17 +24,7 @@ const Layout = () => {
             // Ignore own messages
             if (data.senderId === user?.id) return;
 
-            // Play notification sound
-            try {
-                const audio = new Audio('/notification.mp3');
-                audio.play().catch(e => console.error('Audio play failed', e));
-            } catch (error) {
-                console.error('Audio setup failed', error);
-            }
-
-            // Always show toast for now to ensure user sees it (Chat.tsx might also show one, but Sonner might dedupe or stack)
-            // Or assume Chat.tsx handles it strictly when active.
-            // Let's rely on Sonner.
+            // Show toast notification
             const senderName = data.sender?.firstName ? `${data.sender.firstName} ${data.sender.lastName || ''}` : 'Someone';
             toast.info(`New Message from ${senderName}`, {
                 description: data.content ? (data.content.length > 30 ? data.content.substring(0, 30) + '...' : data.content) : 'You have a new message',

@@ -371,7 +371,7 @@ const Chat = () => {
                                             <span className="font-medium truncate text-sm">
                                                 {conv.partner.firstName} {conv.partner.lastName}
                                             </span>
-                                            {conv.lastMessage && (
+                                            {conv.lastMessage?.sentAt && (
                                                 <span className="text-[10px] text-muted-foreground">
                                                     {format(new Date(conv.lastMessage.sentAt), 'p')}
                                                 </span>
@@ -463,9 +463,11 @@ const Chat = () => {
                                                 )}
 
                                                 {msg.content && <p>{msg.content}</p>}
-                                                <p className={cn("text-[10px] mt-1 opacity-70", isMe ? "text-primary-foreground" : "text-muted-foreground")}>
-                                                    {format(new Date(msg.sentAt), 'p')}
-                                                </p>
+                                                {msg.sentAt && (
+                                                    <p className={cn("text-[10px] mt-1 opacity-70", isMe ? "text-primary-foreground" : "text-muted-foreground")}>
+                                                        {format(new Date(msg.sentAt), 'p')}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     );
