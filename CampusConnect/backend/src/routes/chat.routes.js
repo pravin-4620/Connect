@@ -1,12 +1,14 @@
 import express from 'express';
 import { getConversations, getMessages, getChatPartners, sendMessage, getUnreadCount, markMessagesAsRead, deleteConversation } from '../services/chat.service.js';
 import { authenticate } from '../middleware/auth.js';
+import { checkMaintenanceMode } from '../middleware/maintenance.js';
 import { success, error } from '../utils/response.js';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(authenticate);
+router.use(checkMaintenanceMode);
 
 // Get all conversations for user
 router.get('/conversations', async (req, res) => {

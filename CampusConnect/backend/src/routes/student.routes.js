@@ -21,6 +21,7 @@ import {
     updateSettings
 } from '../controllers/student.controller.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
+import { checkMaintenanceMode } from '../middleware/maintenance.js';
 
 const router = express.Router();
 
@@ -28,6 +29,7 @@ const router = express.Router();
 // All routes require authentication and STUDENT role
 router.use(authenticate);
 router.use(requireRole('STUDENT'));
+router.use(checkMaintenanceMode);
 
 // Dashboard
 router.get('/dashboard', getDashboard);

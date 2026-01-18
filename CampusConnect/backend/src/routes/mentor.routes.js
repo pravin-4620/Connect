@@ -26,6 +26,7 @@ import {
     markBulkAttendance
 } from '../controllers/mentor.controller.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
+import { checkMaintenanceMode } from '../middleware/maintenance.js';
 
 const router = express.Router();
 
@@ -36,6 +37,7 @@ const upload = multer({ storage });
 // All routes require authentication and MENTOR role
 router.use(authenticate);
 router.use(requireRole('MENTOR'));
+router.use(checkMaintenanceMode);
 
 // Dashboard
 router.get('/dashboard', getDashboard);

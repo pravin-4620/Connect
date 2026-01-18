@@ -23,12 +23,14 @@ import {
     deleteInterview
 } from '../controllers/placement.controller.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
+import { checkMaintenanceMode } from '../middleware/maintenance.js';
 
 const router = express.Router();
 
 // All routes require authentication and PLACEMENT_OFFICER role
 router.use(authenticate);
 router.use(requireRole('PLACEMENT_OFFICER'));
+router.use(checkMaintenanceMode);
 
 // Dashboard
 router.get('/dashboard', getDashboard);

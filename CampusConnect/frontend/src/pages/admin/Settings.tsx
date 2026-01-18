@@ -120,14 +120,42 @@ const Settings = () => {
     const handleExportUsers = async () => {
         try {
             const res = await adminAPI.exportUserData();
-            const jsonString = `data:text/json;chatset=utf-8,${encodeURIComponent(
-                JSON.stringify(res.data.data.users, null, 2)
-            )}`;
+            const users = res.data.data.users;
+
+            // Convert to CSV
+            const headers = ['ID', 'Role', 'Email', 'First Name', 'Last Name', 'Phone', 'Details'];
+            const csvRows = [headers.join(',')];
+
+            for (const user of users) {
+                let details = '';
+                if (user.role === 'STUDENT' && user.student) {
+                    details = `Roll: ${user.student.rollNumber} | Year: ${user.student.year} | Dept: ${user.student.department}`;
+                } else if (user.role === 'MENTOR' && user.mentor) {
+                    details = `Dept: ${user.mentor.department} | Exp: ${user.mentor.experienceYears}y`;
+                } else if (user.role === 'PLACEMENT_OFFICER' && user.placementOfficer) {
+                    details = `role: ${user.placementOfficer.designation || 'Officer'}`;
+                }
+
+                const row = [
+                    user.id,
+                    user.role,
+                    user.email,
+                    user.firstName,
+                    user.lastName,
+                    user.phone || '',
+                    `"${details}"` // Quote details to handle commas
+                ];
+                csvRows.push(row.join(','));
+            }
+
+            const csvString = csvRows.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.href = jsonString;
-            link.download = `users_export_${new Date().toISOString()}.json`;
+            link.href = url;
+            link.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
             link.click();
-            toast.success("Export started");
+            toast.success("Users exported as CSV");
         } catch (error) {
             console.error(error);
             toast.error("Export failed");
