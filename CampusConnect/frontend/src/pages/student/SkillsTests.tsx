@@ -28,13 +28,13 @@ const SkillsTests = () => {
     const [result, setResult] = useState<any>(null);
     const [submitting, setSubmitting] = useState(false);
 
-    const { data: tests, loading, refetch } = useQuery<SkillsTestUI[]>(() => studentAPI.getSkillsTests(), {
+    const { data: response, loading, refetch } = useQuery<any>(() => studentAPI.getSkillsTests(), {
         onError: () => {
             toast.error("Failed to fetch skills tests");
         }
     });
 
-    const displayTests: SkillsTestUI[] = tests || [];
+    const displayTests: SkillsTestUI[] = Array.isArray(response?.tests) ? response.tests : [];
 
 
     const handleSubmitTest = async () => {
