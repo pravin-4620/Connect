@@ -268,4 +268,52 @@ export const checkMaintenanceStatus = async (req, res) => {
     }
 };
 
-export { getGmailAuthUrl, handleGmailCallback };
+/**
+ * Gmail connect - get auth URL
+ */
+export const gmailConnect = async (req, res) => {
+    try {
+        const { userId } = req;
+        const authUrl = getGmailAuthUrl(userId);
+        return success(res, { authUrl }, 'Gmail auth URL generated');
+    } catch (err) {
+        console.error('Gmail connect error:', err);
+        return error(res, 'Failed to generate Gmail auth URL', 500);
+    }
+};
+
+/**
+ * Gmail callback - handle OAuth callback
+ */
+export const gmailCallback = async (req, res) => {
+    try {
+        const { code, state } = req.query;
+
+        if (!code || !state) {
+            return error(res, 'Missing authorization code or state', 400);
+        }
+
+        await handleGmailCallback(code, state);
+
+        // Redirect to frontend with success
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/settings?gmail=success`);
+    } catch (err) {
+        console.error('Gmail callback error:', err);
+        // Redirect to frontend with error
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/settings?gmail=error`);
+    }
+};
+
+/**
+ * Logout (placeholder - actual logout is handled on frontend)
+ */
+export const logout = async (req, res) => {
+    try {
+        // In a stateless JWT system, logout is primarily handled client-side
+        // This endpoint can be used for logging or cleanup if needed
+        return success(res, null, 'Logged out successfully');
+    } catch (err) {
+        console.error('Logout error:', err);
+        return error(res, 'Logout failed', 500);
+    }
+};
