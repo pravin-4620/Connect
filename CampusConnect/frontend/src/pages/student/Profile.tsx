@@ -7,55 +7,64 @@ import { uploadService } from '../../services/upload';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
+import { Textarea } from '../../components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { toast } from 'sonner';
-import { Loader2, Upload, FileText, X, Save } from 'lucide-react';
+import { Loader2, Upload, FileText, X, Save, Linkedin, Github, Code, Camera } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { z } from 'zod';
 import FileUpload from '../../components/common/FileUpload';
 import { useQuery } from '../../hooks/useQuery';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 
 type ProfileFormData = z.infer<typeof userProfileSchema>;
 
-// Define profile data interface based on API usage
-interface ProfileData {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    department?: string;
-    skills?: string;
-    resumeUrl?: string;
-}
-
 const Profile = () => {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const [resumeUrl, setResumeUrl] = useState<string | null>(null);
+    const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null);
     const [uploadingResume, setUploadingResume] = useState(false);
+    const [uploadingPic, setUploadingPic] = useState(false);
+
+    // Data Fetching for Performance
+    const { data: attendanceResp } = useQuery<any>(() => studentAPI.getAttendance());
+    const { data: assignmentsResp } = useQuery<any>(() => studentAPI.getAssignments({ status: 'submitted' }));
+    const { data: testsResp } = useQuery<any>(() => studentAPI.getSkillsTests());
+
+    const attendanceStats = attendanceResp?.stats;
+    const assignments = assignmentsResp?.assignments || [];
+    const tests = testsResp?.tests || [];
 
     // Skills management
     const [skillsList, setSkillsList] = useState<string[]>([]);
     const [skillInput, setSkillInput] = useState('');
 
-    const { register, handleSubmit, setValue, formState: { errors }, reset } = useForm<ProfileFormData>({
+    const { register, handleSubmit, setValue, formState: { errors }, reset, watch } = useForm<ProfileFormData>({
         resolver: zodResolver(userProfileSchema),
         defaultValues: {
             firstName: '',
             lastName: '',
             phone: '',
             department: '',
-            skills: ''
+            skills: '',
+            linkedInUrl: '',
+            githubUrl: '',
+            leetcodeUrl: '',
+            about: ''
         }
     });
 
-    const { loading } = useQuery<ProfileData>(() => studentAPI.getProfile(), {
+    const { loading } = useQuery<any>(() => studentAPI.getProfile(), {
         dependencies: [user],
-        onSuccess: (data) => {
+        onSuccess: (response) => {
+            const data = response.student;
             if (data) {
-                // Handle skills: Backend stores as Json (Array), but might be string in legacy
+                // Skills
                 let loadedSkills: string[] = [];
                 if (Array.isArray(data.skills)) {
                     loadedSkills = data.skills as string[];
@@ -63,12 +72,21 @@ const Profile = () => {
                     loadedSkills = (data.skills as string).split(',').map(s => s.trim()).filter(Boolean);
                 }
 
+                // Profile Pic
+                if (data.user?.profilePicture) {
+                    setProfilePicUrl(data.user.profilePicture);
+                }
+
                 reset({
-                    firstName: data.firstName || user?.firstName || '',
-                    lastName: data.lastName || user?.lastName || '',
-                    phone: data.phone || '',
+                    firstName: data.user?.firstName || '',
+                    lastName: data.user?.lastName || '',
+                    phone: data.user?.phone || '',
                     department: data.department || '',
-                    skills: loadedSkills.join(', ') // Form uses string representation
+                    skills: loadedSkills.join(', '),
+                    linkedInUrl: data.linkedInUrl || '',
+                    githubUrl: data.githubUrl || '',
+                    leetcodeUrl: data.leetcodeUrl || '',
+                    about: data.about || ''
                 });
 
                 setSkillsList(loadedSkills);
@@ -80,15 +98,6 @@ const Profile = () => {
         },
         onError: () => {
             toast.error("Failed to load profile data");
-            const fallbackSkills = ['React', 'TypeScript', 'Node.js'];
-            reset({
-                firstName: user?.firstName || 'John',
-                lastName: user?.lastName || 'Doe',
-                phone: '9876543210',
-                department: 'Computer Science',
-                skills: fallbackSkills.join(', ')
-            });
-            setSkillsList(fallbackSkills);
         }
     });
 
@@ -113,12 +122,9 @@ const Profile = () => {
 
     const handleResumeUpload = async (file: File) => {
         if (!file) return;
-
         setUploadingResume(true);
         try {
-            const url = await uploadService.uploadResume(file, (progress) => {
-                console.log(`Upload progress: ${progress}%`);
-            });
+            const url = await uploadService.uploadResume(file, (progress) => console.log(progress));
             setResumeUrl(url);
             toast.success("Resume uploaded successfully");
         } catch (error) {
@@ -129,18 +135,65 @@ const Profile = () => {
         }
     };
 
+    const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Check if already set (though UI should prevent it)
+        if (profilePicUrl && user?.profilePicture) {
+            toast.error("Profile picture cannot be changed once set.");
+            return;
+        }
+
+        setUploadingPic(true);
+        try {
+            // Re-using resume upload logic or create image upload?
+            // Assuming uploadService handles generic file upload or we use commonAPI
+            const formData = new FormData();
+            formData.append('file', file);
+            // We'll use the generic upload endpoint
+            const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                setProfilePicUrl(data.data.url);
+                updateUser({ profilePicture: data.data.url });
+                toast.success("Image uploaded. You may need to click Save to persist other changes.");
+            } else {
+                toast.error("Upload failed");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to upload image");
+        } finally {
+            setUploadingPic(false);
+        }
+    };
+
     const onSubmit = async (data: ProfileFormData) => {
         setIsSaving(true);
         try {
             await studentAPI.updateProfile({
                 ...data,
-                skills: skillsList, // Send as Array
-                resumeUrl
+                skills: skillsList,
+                resumeUrl,
+                profilePicture: profilePicUrl
+            });
+            updateUser({
+                firstName: data.firstName,
+                lastName: data.lastName,
+                phone: data.phone || undefined
             });
             toast.success("Profile updated successfully");
-        } catch (error) {
+            // Ideally trigger a user refresh
+        } catch (error: any) {
             console.error(error);
-            toast.error("Failed to update profile");
+            toast.error(error.response?.data?.message || "Failed to update profile");
         } finally {
             setIsSaving(false);
         }
@@ -149,58 +202,125 @@ const Profile = () => {
     if (loading) return <LoadingSpinner fullScreen={false} />;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
-            <div className="flex items-center space-x-4 mb-6">
-                <Avatar className="h-20 w-20 border-2 border-primary">
-                    <AvatarImage src={user?.profilePicture} alt="Profile" />
-                    <AvatarFallback className="text-2xl font-bold">{user?.firstName?.[0]}{user?.lastName?.[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <h1 className="text-3xl font-bold">{user?.firstName} {user?.lastName}</h1>
-                    <p className="text-muted-foreground capitalize">{user?.role.toLowerCase().replace('_', ' ')} • {user?.email}</p>
+        <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
+            {/* Header / Basic Info */}
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+                <div className="relative group">
+                    <Avatar className="h-32 w-32 border-4 border-background shadow-xl">
+                        <AvatarImage src={profilePicUrl || user?.profilePicture} alt="Profile" className="object-cover" />
+                        <AvatarFallback className="text-4xl font-bold">{user?.firstName?.[0]}{user?.lastName?.[0]}</AvatarFallback>
+                    </Avatar>
+
+                    {!user?.profilePicture && !profilePicUrl && (
+                        <div className="absolute bottom-0 right-0">
+                            <Label htmlFor="profile-pic" className="cursor-pointer">
+                                <div className="bg-primary text-primary-foreground p-2 rounded-full hover:bg-primary/90 transition-colors shadow-lg">
+                                    {uploadingPic ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+                                </div>
+                            </Label>
+                            <Input
+                                id="profile-pic"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleProfilePicUpload}
+                                disabled={uploadingPic}
+                            />
+                        </div>
+                    )}
                 </div>
+
+                <div className="flex-1 space-y-2">
+                    <h1 className="text-4xl font-bold tracking-tight">{user?.firstName} {user?.lastName}</h1>
+                    <div className="flex flex-wrap gap-2 text-muted-foreground">
+                        <Badge variant="outline" className="text-sm">{user?.role.replace('_', ' ')}</Badge>
+                        <span className="flex items-center gap-1">• {user?.email}</span>
+                        {user?.student?.department && <span>• {user.student.department}</span>}
+                    </div>
+                    <p className="max-w-xl text-muted-foreground text-sm pt-2">
+                        {watch('about') || "No bio added yet."}
+                    </p>
+                </div>
+
+                <Button onClick={handleSubmit(onSubmit)} disabled={isSaving} size="lg" className="shrink-0">
+                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Save Changes
+                </Button>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="grid gap-6 md:grid-cols-2">
-                    {/* Personal Details */}
-                    <Card className="md:col-span-1">
-                        <CardHeader>
-                            <CardTitle>Personal Details</CardTitle>
-                            <CardDescription>Update your contact information</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+                <div className="grid gap-8 md:grid-cols-3">
+                    {/* Left Column: Personal info & Socials */}
+                    <div className="md:col-span-2 space-y-8">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Personal Details</CardTitle>
+                                <CardDescription>Your contact and academic information</CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid gap-4 md:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="firstName">First Name</Label>
-                                    <Input id="firstName" {...register('firstName')} />
+                                    <Label>First Name</Label>
+                                    <Input {...register('firstName')} />
                                     {errors.firstName && <span className="text-xs text-destructive">{errors.firstName.message}</span>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="lastName">Last Name</Label>
-                                    <Input id="lastName" {...register('lastName')} />
+                                    <Label>Last Name</Label>
+                                    <Input {...register('lastName')} />
                                     {errors.lastName && <span className="text-xs text-destructive">{errors.lastName.message}</span>}
                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="phone">Phone Number</Label>
-                                <Input id="phone" {...register('phone')} placeholder="+91 9999999999" />
-                                {errors.phone && <span className="text-xs text-destructive">{errors.phone.message}</span>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="department">Department</Label>
-                                <Input id="department" {...register('department')} disabled className="bg-muted" />
-                                {errors.department && <span className="text-xs text-destructive">{errors.department.message}</span>}
-                            </div>
-                        </CardContent>
-                    </Card>
+                                <div className="space-y-2">
+                                    <Label>Phone</Label>
+                                    <Input {...register('phone')} placeholder="+91..." />
+                                    {errors.phone && <span className="text-xs text-destructive">{errors.phone.message}</span>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Department</Label>
+                                    <Input {...register('department')} disabled className="bg-muted" />
+                                </div>
+                                <div className="col-span-2 space-y-2">
+                                    <Label>About Me</Label>
+                                    <Textarea
+                                        {...register('about')}
+                                        placeholder="Brief introduction about yourself..."
+                                        className="resize-none h-24"
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                    {/* Resume & Skills */}
-                    <div className="space-y-6 md:col-span-1">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Social Profiles</CardTitle>
+                                <CardDescription>Connect your professional presence</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center gap-2">
+                                    <Linkedin className="h-5 w-5 text-blue-600 shrink-0" />
+                                    <Input {...register('linkedInUrl')} placeholder="LinkedIn URL" />
+                                </div>
+                                {errors.linkedInUrl && <span className="text-xs text-destructive ml-7">{errors.linkedInUrl.message}</span>}
+
+                                <div className="flex items-center gap-2">
+                                    <Github className="h-5 w-5 shrink-0" />
+                                    <Input {...register('githubUrl')} placeholder="GitHub URL" />
+                                </div>
+                                {errors.githubUrl && <span className="text-xs text-destructive ml-7">{errors.githubUrl.message}</span>}
+
+                                <div className="flex items-center gap-2">
+                                    <Code className="h-5 w-5 text-yellow-600 shrink-0" />
+                                    <Input {...register('leetcodeUrl')} placeholder="LeetCode/HackerRank URL" />
+                                </div>
+                                {errors.leetcodeUrl && <span className="text-xs text-destructive ml-7">{errors.leetcodeUrl.message}</span>}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Right Column: Skills & Resume */}
+                    <div className="space-y-8">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Resume</CardTitle>
-                                <CardDescription>Manage your CV for placements</CardDescription>
+                                <CardDescription>Manage your CV</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {resumeUrl ? (
@@ -240,7 +360,7 @@ const Profile = () => {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Skills</CardTitle>
-                                <CardDescription>Add technical skills for matching</CardDescription>
+                                <CardDescription>Add your technical skills</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex gap-2">
@@ -248,7 +368,7 @@ const Profile = () => {
                                         value={skillInput}
                                         onChange={(e) => setSkillInput(e.target.value)}
                                         onKeyDown={handleAddSkill}
-                                        placeholder="Add skill (e.g. React) and press Enter"
+                                        placeholder="Add skill..."
                                     />
                                     <Button type="button" onClick={handleAddSkill} size="icon">
                                         <Upload className="h-4 w-4 rotate-90" />
@@ -256,12 +376,12 @@ const Profile = () => {
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     {skillsList.map((skill) => (
-                                        <Badge key={skill} variant="secondary" className="px-2 py-1 text-sm bg-primary/10 hover:bg-primary/20 text-primary border-primary/20">
+                                        <Badge key={skill} variant="secondary" className="px-2 py-1 flex items-center gap-1">
                                             {skill}
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveSkill(skill)}
-                                                className="ml-2 hover:text-destructive focus:outline-none"
+                                                className="hover:text-destructive focus:outline-none"
                                             >
                                                 <X className="h-3 w-3" />
                                             </button>
@@ -271,28 +391,113 @@ const Profile = () => {
                                         <p className="text-sm text-muted-foreground italic">No skills added yet.</p>
                                     )}
                                 </div>
-                                <Input type="hidden" {...register('skills')} />
                             </CardContent>
                         </Card>
                     </div>
                 </div>
-
-                <div className="flex justify-end mt-6">
-                    <Button type="submit" size="lg" disabled={isSaving}>
-                        {isSaving ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Saving...
-                            </>
-                        ) : (
-                            <>
-                                <Save className="mr-2 h-4 w-4" />
-                                Save Changes
-                            </>
-                        )}
-                    </Button>
-                </div>
             </form>
+
+            {/* Academic Performance Section */}
+            <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Attendance Overview</CardTitle>
+                        <CardDescription>Overall attendance percentage</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center justify-center min-h-[300px]">
+                        {attendanceStats ? (
+                            <div className="w-full h-[250px] relative">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={[
+                                                { name: 'Present', value: attendanceStats.present },
+                                                { name: 'Absent', value: attendanceStats.absent },
+                                                { name: 'On Duty', value: attendanceStats.od },
+                                                ...(attendanceStats.leave ? [{ name: 'Leave', value: attendanceStats.leave }] : [])
+                                            ]}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            <Cell fill="#22c55e" />
+                                            <Cell fill="#ef4444" />
+                                            <Cell fill="#3b82f6" />
+                                            <Cell fill="#eab308" />
+                                        </Pie>
+                                        <RechartsTooltip />
+                                        <Legend verticalAlign="bottom" height={36} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[60%] text-center pointer-events-none">
+                                    <div className="text-3xl font-bold">{attendanceStats.percentage?.toFixed(1)}%</div>
+                                    <div className="text-xs text-muted-foreground">Overall</div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-muted-foreground">
+                                No attendance data available
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Grades & Assessments</CardTitle>
+                        <CardDescription>Recent performance in assignments and tests</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Tabs defaultValue="assignments" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="assignments">Assignments</TabsTrigger>
+                                <TabsTrigger value="tests">Skills Tests</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="assignments" className="mt-4 space-y-4 max-h-[250px] overflow-y-auto pr-2">
+                                {assignments.length > 0 ? (
+                                    assignments.map((assignment: any) => (
+                                        <div key={assignment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                            <div>
+                                                <p className="font-medium">{assignment.title}</p>
+                                                <p className="text-xs text-muted-foreground">{new Date(assignment.dueDate).toLocaleDateString()}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <Badge variant={assignment.submissions?.[0]?.grade >= 50 ? 'secondary' : 'destructive'}>
+                                                    {assignment.submissions?.[0]?.grade ?? 'N/A'} / 100
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-center text-muted-foreground py-8">No graded assignments found</p>
+                                )}
+                            </TabsContent>
+                            <TabsContent value="tests" className="mt-4 space-y-4 max-h-[250px] overflow-y-auto pr-2">
+                                {tests.filter((t: any) => t.status === 'COMPLETED' || t.attempts?.length > 0).length > 0 ? (
+                                    tests.filter((t: any) => t.status === 'COMPLETED' || t.attempts?.length > 0).map((test: any) => (
+                                        <div key={test.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                            <div>
+                                                <p className="font-medium">{test.title}</p>
+                                                <p className="text-xs text-muted-foreground">{test.attempts?.[0]?.attemptedAt ? new Date(test.attempts[0].attemptedAt).toLocaleDateString() : 'Completed'}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <Badge variant="outline" className="bg-primary/5">
+                                                    {test.score ?? test.attempts?.[0]?.score ?? 0} / {test.totalMarks}
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-center text-muted-foreground py-8">No completed tests found</p>
+                                )}
+                            </TabsContent>
+                        </Tabs>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 };

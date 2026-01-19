@@ -189,6 +189,7 @@ const AdminAnnouncements = () => {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="ALL">All Users</SelectItem>
+                                        <SelectItem value="ADMIN">Admins</SelectItem>
                                         <SelectItem value="STUDENT">Students</SelectItem>
                                         <SelectItem value="MENTOR">Mentors</SelectItem>
                                         <SelectItem value="PLACEMENT_OFFICER">Placement Officers</SelectItem>

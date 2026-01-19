@@ -30,6 +30,10 @@ export const userProfileSchema = z.object({
     phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number').optional().or(z.literal('')),
     department: z.string().min(1, 'Department is required'),
     skills: z.string().optional(),
+    linkedInUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+    githubUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+    leetcodeUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+    about: z.string().optional(),
 });
 
 export const placementSchema = z.object({

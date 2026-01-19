@@ -111,10 +111,11 @@ export const getDashboard = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const userId = req.userId;
-        const { phone, skills, cgpa } = req.body;
+        const { phone, skills, cgpa, linkedInUrl, githubUrl, leetcodeUrl, about, certificates, profilePicture } = req.body;
 
         const student = await prisma.student.findUnique({
-            where: { userId }
+            where: { userId },
+            include: { user: true }
         });
 
         if (!student) {
@@ -122,17 +123,33 @@ export const updateProfile = async (req, res) => {
         }
 
         // Update user info
-        await prisma.user.update({
-            where: { id: userId },
-            data: { phone }
-        });
+        const userUpdateData = {};
+        if (phone) userUpdateData.phone = phone;
+        if (profilePicture) {
+            if (student.user.profilePicture) {
+                return error(res, 'Profile picture cannot be changed once set', 400);
+            }
+            userUpdateData.profilePicture = profilePicture;
+        }
+
+        if (Object.keys(userUpdateData).length > 0) {
+            await prisma.user.update({
+                where: { id: userId },
+                data: userUpdateData
+            });
+        }
 
         // Update student info
         const updatedStudent = await prisma.student.update({
             where: { id: student.id },
             data: {
                 skills: skills || student.skills,
-                cgpa: cgpa !== undefined ? parseFloat(cgpa) : student.cgpa
+                cgpa: cgpa !== undefined ? parseFloat(cgpa) : student.cgpa,
+                linkedInUrl,
+                githubUrl,
+                leetcodeUrl,
+                about,
+                certificates: certificates || student.certificates
             },
             include: {
                 user: true,
@@ -793,6 +810,94 @@ export const getEmails = async (req, res) => {
     } catch (err) {
         console.error('Get emails error:', err);
         return error(res, 'Failed to fetch emails', 500);
+    }
+};
+
+/**
+ * Upload event certificate
+ */
+export const uploadEventCertificate = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { eventId } = req.params;
+        const { certificateUrl } = req.body;
+
+        if (!certificateUrl) return error(res, 'Certificate URL required', 400);
+
+        const student = await prisma.student.findUnique({ where: { userId } });
+
+        const registration = await prisma.eventRegistration.findUnique({
+            where: {
+                eventId_studentId: {
+                    eventId,
+                    studentId: student.id
+                }
+            }
+        });
+
+        if (!registration) return error(res, 'Registration not found', 404);
+
+        // Allow uploading if status is APPROVED (or COMPLETED?) 
+        // Assuming APPROVED means they were allowed to attend.
+        // Or maybe check EventStatus?
+        // Let's stick to registration status 'APPROVED'
+        if (registration.status !== 'APPROVED') return error(res, 'Registration not approved', 400);
+
+        const updated = await prisma.eventRegistration.update({
+            where: { id: registration.id },
+            data: {
+                certificateUrl,
+                certificateUploadedAt: new Date()
+            }
+        });
+
+        return success(res, { registration: updated }, 'Certificate uploaded successfully');
+    } catch (err) {
+        console.error('Upload certificate error:', err);
+        return error(res, 'Failed to upload certificate', 500);
+    }
+};
+
+/**
+ * Get attendance records
+ */
+export const getAttendance = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const student = await prisma.student.findUnique({ where: { userId } });
+
+        if (!student) return error(res, 'Student not found', 404);
+
+        const records = await prisma.attendanceRecord.findMany({
+            where: { studentId: student.id },
+            orderBy: { date: 'desc' }
+        });
+
+        // Calculate stats
+        const total = records.length;
+        const present = records.filter(r => r.status === 'PRESENT').length;
+        const absent = records.filter(r => r.status === 'ABSENT').length;
+        const od = records.filter(r => r.status === 'ON_DUTY').length;
+        const leave = records.filter(r => r.status === 'LEAVE').length;
+
+        // Assuming OD counts as present for Percentage? Or just Present?
+        // Usually OD (On Duty) is considered Present.
+        const percentage = total > 0 ? ((present + od) / total) * 100 : 0;
+
+        return success(res, {
+            records,
+            stats: {
+                total,
+                present,
+                absent,
+                od,
+                leave,
+                percentage
+            }
+        }, 'Attendance fetched');
+    } catch (err) {
+        console.error('Get attendance error:', err);
+        return error(res, 'Failed to fetch attendance', 500);
     }
 };
 

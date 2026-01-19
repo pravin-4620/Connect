@@ -18,6 +18,7 @@ export interface User {
     isFirstLogin: boolean;
     gmailConnected: boolean;
     mentor?: Mentor;
+    student?: Student;
 }
 
 export interface Student {
@@ -33,6 +34,10 @@ export interface Student {
     resumeUrl?: string;
     skills?: string[];
     attendance?: number;
+    linkedInUrl?: string;
+    githubUrl?: string;
+    leetcodeUrl?: string;
+    about?: string;
 }
 
 export interface Mentor {

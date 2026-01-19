@@ -18,7 +18,9 @@ import {
     applyForGatePass,
     getGatePasses,
     getSettings,
-    updateSettings
+    updateSettings,
+    uploadEventCertificate,
+    getAttendance
 } from '../controllers/student.controller.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { checkMaintenanceMode } from '../middleware/maintenance.js';
@@ -49,6 +51,10 @@ router.post('/placements/:placementId/apply', applyForPlacement);
 // Events
 router.get('/events', getEvents);
 router.post('/events/:eventId/register', registerForEvent);
+router.post('/events/:eventId/certificate', uploadEventCertificate);
+
+// Attendance
+router.get('/attendance', getAttendance);
 
 // Assignments
 router.get('/assignments', getAssignments);

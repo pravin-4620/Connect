@@ -68,6 +68,7 @@ const StudentEvents = () => {
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [registering, setRegistering] = useState(false);
     const [view, setView] = useState<View>(Views.MONTH);
+    const [date, setDate] = useState(new Date());
 
     const { loading, refetch } = useQuery<{ events: Event[] }>(() => studentAPI.getEvents(), {
         onSuccess: (data) => {
@@ -146,7 +147,8 @@ const StudentEvents = () => {
                         views={['month', 'week', 'day', 'agenda']}
                         view={view}
                         onView={setView}
-                        date={new Date()}
+                        date={date}
+                        onNavigate={setDate}
                         popup
                         step={60}
                         showMultiDayTimes

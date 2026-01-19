@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Label } from '../../components/ui/label';
@@ -19,6 +19,30 @@ const StudentSettings = () => {
     const [pushNotifs, setPushNotifs] = useState(true);
     const [saving, setSaving] = useState(false);
     const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+    const [tempTheme, setTempTheme] = useState(theme);
+
+    // Sync tempTheme if global theme changes externally (e.g. initial load)
+    useEffect(() => {
+        setTempTheme(theme);
+    }, [theme]);
+
+    const handleSaveTheme = async () => {
+        setSaving(true);
+        try {
+            setTheme(tempTheme); // Apply visually
+            await studentAPI.updateSettings({
+                emailNotifs,
+                pushNotifs,
+                theme: tempTheme
+            });
+            toast.success("Theme updated successfully");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to save theme");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     // Fetch Settings
     useQuery<any>(() => studentAPI.getSettings(), {
@@ -104,30 +128,35 @@ const StudentSettings = () => {
                     </CardHeader>
                     <CardContent className="grid grid-cols-3 gap-2">
                         <Button
-                            variant={theme === 'light' ? 'default' : 'outline'}
+                            variant={tempTheme === 'light' ? 'default' : 'outline'}
                             className="flex flex-col items-center justify-center h-20 gap-2"
-                            onClick={() => setTheme('light')}
+                            onClick={() => setTempTheme('light')}
                         >
                             <Sun className="h-6 w-6" />
                             Light
                         </Button>
                         <Button
-                            variant={theme === 'dark' ? 'default' : 'outline'}
+                            variant={tempTheme === 'dark' ? 'default' : 'outline'}
                             className="flex flex-col items-center justify-center h-20 gap-2"
-                            onClick={() => setTheme('dark')}
+                            onClick={() => setTempTheme('dark')}
                         >
                             <Moon className="h-6 w-6" />
                             Dark
                         </Button>
                         <Button
-                            variant={theme === 'system' ? 'default' : 'outline'}
+                            variant={tempTheme === 'system' ? 'default' : 'outline'}
                             className="flex flex-col items-center justify-center h-20 gap-2"
-                            onClick={() => setTheme('system')}
+                            onClick={() => setTempTheme('system')}
                         >
                             <Monitor className="h-6 w-6" />
                             System
                         </Button>
                     </CardContent>
+                    <CardFooter>
+                        <Button onClick={handleSaveTheme} variant="outline" size="sm" disabled={saving}>
+                            {saving ? "Saving..." : "Save Appearance"}
+                        </Button>
+                    </CardFooter>
                 </Card>
 
                 {/* Security */}

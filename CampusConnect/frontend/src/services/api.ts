@@ -103,6 +103,7 @@ export const studentAPI = {
     applyForGatePass: (data: any) => api.post('/student/gate-pass', data),
     getSettings: () => api.get('/student/settings'),
     updateSettings: (data: any) => api.put('/student/settings', data),
+    getAttendance: () => api.get('/student/attendance'),
     submitTest: (testId: string, answers: any[]) => api.post(`/student/skills-tests/${testId}/attempt`, { answers }),
 };
 

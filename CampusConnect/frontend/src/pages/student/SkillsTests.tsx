@@ -34,38 +34,7 @@ const SkillsTests = () => {
         }
     });
 
-    // Mock data with questions structure
-    const displayTests: SkillsTestUI[] = (tests && Array.isArray(tests) && tests.length > 0) ? tests : [
-        {
-            id: '1',
-            title: 'JavaScript Fundamentals',
-            description: 'Test your knowledge of ES6+, closures, and async programming.',
-            durationMinutes: 45,
-            totalMarks: 50,
-            createdById: 'admin',
-            difficulty: 'Intermediate',
-            status: 'AVAILABLE',
-            questions: [
-                { id: '1', question: "What is the output of typeof null?", options: ["object", "null", "undefined", "number"], correctAnswer: "object", type: 'MCQ', marks: 10 },
-                { id: '2', question: "Which method creates a new array with all elements that pass the test?", options: ["map()", "filter()", "reduce()", "forEach()"], correctAnswer: "filter()", type: 'MCQ', marks: 10 },
-                { id: '3', question: "How do you declare a constant variable?", options: ["var", "let", "const", "static"], correctAnswer: "const", type: 'MCQ', marks: 10 },
-                { id: '4', question: "What represents 'Not-a-Number' in JavaScript?", options: ["NaN", "null", "undefined", "Error"], correctAnswer: "NaN", type: 'MCQ', marks: 10 },
-                { id: '5', question: "Is JavaScript single-threaded?", options: ["Yes", "No", "Depends on OS", "Only in strict mode"], correctAnswer: "Yes", type: 'MCQ', marks: 10 }
-            ]
-        },
-        {
-            id: '2',
-            title: 'React.js Core Concepts',
-            description: 'Assessment on Components, Hooks, and State Management.',
-            durationMinutes: 60,
-            totalMarks: 100,
-            createdById: 'admin',
-            difficulty: 'Advanced',
-            status: 'COMPLETED',
-            score: 85,
-            questions: [] // Questions usually not needed for completed tests in list view
-        }
-    ];
+    const displayTests: SkillsTestUI[] = tests || [];
 
 
     const handleSubmitTest = async () => {

@@ -14,7 +14,7 @@ interface AuthContextType {
     logout: () => void;
     isAuthenticated: boolean;
     hasRole: (roles: Role[]) => boolean;
-    updateProfile: (data: Partial<User>) => void;
+    updateUser: (data: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return user ? roles.includes(user.role) : false;
     };
 
-    const updateProfile = (data: Partial<User>) => {
+    const updateUser = (data: Partial<User>) => {
         if (!user) return;
         const updatedUser = { ...user, ...data };
         setUser(updatedUser);
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             error,
             login,
             logout,
-            updateProfile,
+            updateUser,
             isAuthenticated: !!user,
             hasRole
         }}>
