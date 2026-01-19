@@ -7,13 +7,15 @@ import {
     gmailConnect,
     gmailCallback,
     getProfile,
-    updateProfile
+    updateProfile,
+    checkMaintenanceStatus
 } from '../controllers/auth.controller.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Public routes
+router.get('/maintenance-status', checkMaintenanceStatus);
 router.post('/login', login);
 router.post('/admin-login', adminLogin);
 router.get('/gmail-callback', gmailCallback);

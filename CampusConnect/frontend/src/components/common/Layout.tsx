@@ -11,7 +11,7 @@ import { useAuth } from '../../hooks/useAuth';
 
 const Layout = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
 
     useEffect(() => {
         // Pre-load notification sound
@@ -58,14 +58,62 @@ const Layout = () => {
             });
         };
 
+        // Always listen for general notifications
         socketService.on('notification', handleNotification);
-        socketService.on('newMessage', handleNewMessage);
 
+        if (user) {
+            socketService.on('newMessage', handleNewMessage);
+        }
+
+        // Cleanup for general notifications
         return () => {
             socketService.off('notification', handleNotification);
-            socketService.off('newMessage', handleNewMessage);
+            if (user) {
+                socketService.off('newMessage', handleNewMessage);
+            }
         };
     }, [navigate, user]);
+
+    useEffect(() => {
+        if (user) {
+            // Check maintenance mode periodically (every 30 seconds)
+            const checkMaintenance = async () => {
+                // Skip check for admin users
+                if (['ADMIN', 'SUB_ADMIN', 'CHIEF_MENTOR'].includes(user.role)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/maintenance-status`);
+                    const data = await response.json();
+
+                    if (data.success && data.data.maintenanceMode) {
+                        // Show toast notification
+                        toast.error('System is now under maintenance. You will be logged out.', {
+                            duration: 5000,
+                        });
+
+                        // Wait 2 seconds then logout
+                        setTimeout(() => {
+                            logout();
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Failed to check maintenance status:', err);
+                }
+            };
+
+            // Check immediately
+            checkMaintenance();
+
+            // Then check every 30 seconds
+            const maintenanceInterval = setInterval(checkMaintenance, 30000);
+
+            return () => {
+                clearInterval(maintenanceInterval);
+            };
+        }
+    }, [user, logout]);
 
     return (
         <div className="flex min-h-screen bg-muted/20">

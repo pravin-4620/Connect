@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -30,6 +30,8 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showMaintenance, setShowMaintenance] = useState(false);
+    const [isMaintenanceActive, setIsMaintenanceActive] = useState(false);
+    const [checkingMaintenance, setCheckingMaintenance] = useState(true);
 
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -37,6 +39,25 @@ const Login = () => {
             role: 'STUDENT',
         }
     });
+
+    // Check maintenance status on component mount
+    useEffect(() => {
+        const checkMaintenance = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/maintenance-status`);
+                const data = await response.json();
+                if (data.success && data.data.maintenanceMode) {
+                    setIsMaintenanceActive(true);
+                    setShowMaintenance(true);
+                }
+            } catch (err) {
+                console.error('Failed to check maintenance status:', err);
+            } finally {
+                setCheckingMaintenance(false);
+            }
+        };
+        checkMaintenance();
+    }, []);
 
     const onSubmit = async (data: FormValues) => {
         try {
@@ -55,6 +76,44 @@ const Login = () => {
             }
         }
     };
+
+    if (checkingMaintenance) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (isMaintenanceActive) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+                <Card className="w-full max-w-md shadow-lg border-amber-200">
+                    <CardHeader className="text-center">
+                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+                            <AlertTriangle className="h-8 w-8 text-amber-600" />
+                        </div>
+                        <CardTitle className="text-2xl text-amber-600">System Under Maintenance</CardTitle>
+                        <CardDescription className="pt-2 text-base">
+                            The CampusConnect platform is currently undergoing scheduled maintenance to improve your experience.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="text-center space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                            Students, Mentors, and Placement Officers cannot login at this time.
+                            <br /><br />
+                            Please check back shortly or contact your administrator for more information.
+                        </p>
+                        <div className="pt-4">
+                            <p className="text-xs text-muted-foreground">
+                                Admin access? <Link to="/admin/login" className="text-primary hover:underline font-medium">Login here</Link>
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">

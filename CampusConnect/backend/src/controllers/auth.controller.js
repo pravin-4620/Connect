@@ -100,19 +100,25 @@ export const adminLogin = async (req, res) => {
             where: { email: email.toLowerCase() }
         });
 
-        if (!user || !['ADMIN', 'SUB_ADMIN', 'CHIEF_MENTOR'].includes(user.role)) {
-            return error(res, 'Invalid admin credentials', 401);
+        if (!user) {
+            return error(res, 'Invalid credentials', 401);
         }
 
+        // Check if blocked
         if (user.isBlocked) {
             return error(res, 'Account blocked. Contact admin.', 403);
+        }
+
+        // Check if user is admin or sub-admin
+        if (!['ADMIN', 'SUB_ADMIN'].includes(user.role)) {
+            return error(res, 'Access denied. Admin privileges required.', 403);
         }
 
         // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
         if (!isPasswordValid) {
-            return error(res, 'Invalid admin credentials', 401);
+            return error(res, 'Invalid credentials', 401);
         }
 
         // Generate token
@@ -123,7 +129,8 @@ export const adminLogin = async (req, res) => {
 
         return success(res, {
             token,
-            user: userWithoutPassword
+            user: userWithoutPassword,
+            isFirstLogin: user.isFirstLogin
         }, 'Admin login successful');
 
     } catch (err) {
@@ -133,38 +140,25 @@ export const adminLogin = async (req, res) => {
 };
 
 /**
- * Logout (client-side token removal, optional server-side tracking)
- */
-export const logout = async (req, res) => {
-    try {
-        // In a stateless JWT system, logout is primarily client-side
-        return success(res, null, 'Logout successful');
-    } catch (err) {
-        console.error('Logout error:', err);
-        return error(res, 'Logout failed', 500);
-    }
-};
-
-/**
- * Change password (required on first login)
+ * Change password
  */
 export const changePassword = async (req, res) => {
     try {
+        const { userId } = req;
         const { currentPassword, newPassword } = req.body;
-        const userId = req.userId;
 
         if (!currentPassword || !newPassword) {
-            return error(res, 'Current and new passwords are required', 400);
+            return error(res, 'Current password and new password are required', 400);
         }
 
-        if (newPassword.length < 6) {
-            return error(res, 'New password must be at least 6 characters', 400);
-        }
-
-        // Get user
+        // Find user
         const user = await prisma.user.findUnique({
             where: { id: userId }
         });
+
+        if (!user) {
+            return error(res, 'User not found', 404);
+        }
 
         // Verify current password
         const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
@@ -174,13 +168,13 @@ export const changePassword = async (req, res) => {
         }
 
         // Hash new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
 
         // Update password and set isFirstLogin to false
         await prisma.user.update({
             where: { id: userId },
             data: {
-                passwordHash: hashedPassword,
+                passwordHash: newPasswordHash,
                 isFirstLogin: false
             }
         });
@@ -194,47 +188,14 @@ export const changePassword = async (req, res) => {
 };
 
 /**
- * Initiate Gmail OAuth flow
- */
-export const gmailConnect = async (req, res) => {
-    try {
-        const authUrl = getGmailAuthUrl(req.userId);
-        return success(res, { authUrl }, 'Auth URL generated');
-    } catch (err) {
-        console.error('Gmail connect error:', err);
-        return error(res, 'Failed to initiate Gmail connection', 500);
-    }
-};
-
-/**
- * Handle Gmail OAuth callback
- */
-export const gmailCallback = async (req, res) => {
-    try {
-        const { code, state } = req.query;
-
-        if (!code || !state) {
-            return res.status(400).send('Missing authorization code or state');
-        }
-
-        const userId = state; // We passed userId as state
-        await handleGmailCallback(code, userId);
-
-        // Redirect to frontend success page
-        res.redirect(`${process.env.FRONTEND_URL}/gmail-connected`);
-    } catch (err) {
-        console.error('Gmail callback error:', err);
-        res.redirect(`${process.env.FRONTEND_URL}/gmail-error`);
-    }
-};
-
-/**
  * Get current user profile
  */
 export const getProfile = async (req, res) => {
     try {
+        const { userId } = req;
+
         const user = await prisma.user.findUnique({
-            where: { id: req.userId },
+            where: { id: userId },
             include: {
                 student: true,
                 mentor: true,
@@ -242,9 +203,14 @@ export const getProfile = async (req, res) => {
             }
         });
 
+        if (!user) {
+            return error(res, 'User not found', 404);
+        }
+
         const { passwordHash, ...userWithoutPassword } = user;
 
-        return success(res, { user: userWithoutPassword }, 'Profile fetched');
+        return success(res, { user: userWithoutPassword }, 'Profile fetched successfully');
+
     } catch (err) {
         console.error('Get profile error:', err);
         return error(res, 'Failed to fetch profile', 500);
@@ -252,20 +218,26 @@ export const getProfile = async (req, res) => {
 };
 
 /**
- * Update current user profile
+ * Update user profile
  */
 export const updateProfile = async (req, res) => {
     try {
-        const userId = req.userId;
+        const { userId } = req;
         const { firstName, lastName, phone, profilePicture } = req.body;
+
+        const updateData = {};
+        if (firstName) updateData.firstName = firstName;
+        if (lastName) updateData.lastName = lastName;
+        if (phone) updateData.phone = phone;
+        if (profilePicture) updateData.profilePicture = profilePicture;
 
         const updatedUser = await prisma.user.update({
             where: { id: userId },
-            data: {
-                firstName,
-                lastName,
-                phone,
-                profilePicture
+            data: updateData,
+            include: {
+                student: true,
+                mentor: true,
+                placementOfficer: true
             }
         });
 
@@ -277,3 +249,23 @@ export const updateProfile = async (req, res) => {
         return error(res, 'Failed to update profile', 500);
     }
 };
+
+/**
+ * Check maintenance status (public endpoint)
+ */
+export const checkMaintenanceStatus = async (req, res) => {
+    try {
+        const maintenance = await prisma.systemSettings.findUnique({
+            where: { key: 'maintenance_mode' }
+        });
+
+        return success(res, {
+            maintenanceMode: maintenance?.value === 'true'
+        }, 'Maintenance status fetched');
+    } catch (err) {
+        console.error('Check maintenance error:', err);
+        return error(res, 'Failed to check maintenance status', 500);
+    }
+};
+
+export { getGmailAuthUrl, handleGmailCallback };
