@@ -31,6 +31,7 @@ interface MappedUser {
     email: string;
     role: string;
     mentorId?: string | null;
+    chiefMentorId?: string | null;
     placementOfficerId?: string | null;
 }
 
@@ -39,10 +40,11 @@ import { Checkbox } from '../../components/ui/checkbox';
 const AdminMappings = () => {
     const [students, setStudents] = useState<MappedUser[]>([]);
     const [mentors, setMentors] = useState<MappedUser[]>([]);
+    const [chiefMentors, setChiefMentors] = useState<MappedUser[]>([]);
     const [officers, setOfficers] = useState<MappedUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [changes, setChanges] = useState<{ [key: string]: { mentorId?: string, officerId?: string } }>({});
+    const [changes, setChanges] = useState<{ [key: string]: { mentorId?: string, chiefMentorId?: string, officerId?: string } }>({});
 
     // Bulk Selection State
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -72,13 +74,14 @@ const AdminMappings = () => {
                     email: u.email,
                     role: 'STUDENT',
                     mentorId: u.student?.mentorId,
+                    chiefMentorId: u.student?.chiefMentorId,
                     placementOfficerId: u.student?.placementOfficerId
                 })).filter(s => s.id); // Filter out any creating issues
             setStudents(studentList);
 
             // Map Mentors
             const mentorList = allUsers
-                .filter(u => (u.role === 'MENTOR' || u.role === 'CHIEF_MENTOR') && u.mentor)
+                .filter(u => u.role === 'MENTOR' && u.mentor)
                 .map(u => ({
                     id: u.mentor?.id || '',
                     userId: u.id,
@@ -88,6 +91,19 @@ const AdminMappings = () => {
                     role: u.role
                 })).filter(m => m.id);
             setMentors(mentorList);
+
+            // Map Chief Mentors
+            const chiefList = allUsers
+                .filter(u => u.role === 'CHIEF_MENTOR' && u.mentor)
+                .map(u => ({
+                    id: u.mentor?.id || '',
+                    userId: u.id,
+                    firstName: u.firstName,
+                    lastName: u.lastName,
+                    email: u.email,
+                    role: u.role
+                })).filter(m => m.id);
+            setChiefMentors(chiefList);
 
             // Map Officers
             const officerList = allUsers
@@ -110,12 +126,12 @@ const AdminMappings = () => {
         }
     };
 
-    const handleChange = (studentId: string, type: 'mentor' | 'officer', value: string) => {
+    const handleChange = (studentId: string, type: 'mentor' | 'chief' | 'officer', value: string) => {
         setChanges(prev => ({
             ...prev,
             [studentId]: {
                 ...prev[studentId],
-                [type === 'mentor' ? 'mentorId' : 'officerId']: value
+                [type === 'mentor' ? 'mentorId' : type === 'chief' ? 'chiefMentorId' : 'officerId']: value
             }
         }));
     };
@@ -128,6 +144,7 @@ const AdminMappings = () => {
             await adminAPI.createMapping({
                 studentId,
                 mentorId: change.mentorId,
+                chiefMentorId: change.chiefMentorId,
                 placementOfficerId: change.officerId
             });
             toast.success("Mapping updated");
@@ -262,6 +279,7 @@ const AdminMappings = () => {
                                     </TableHead>
                                     <TableHead>Student</TableHead>
                                     <TableHead>Mentor</TableHead>
+                                    <TableHead>Chief Mentor</TableHead>
                                     <TableHead>Placement Officer</TableHead>
                                     <TableHead className="text-right">Action</TableHead>
                                 </TableRow>
@@ -290,11 +308,26 @@ const AdminMappings = () => {
                                                     value={currentMentor || undefined}
                                                     onValueChange={(val) => handleChange(student.id, 'mentor', val)}
                                                 >
-                                                    <SelectTrigger className="w-[200px]">
+                                                    <SelectTrigger className="w-[180px]">
                                                         <SelectValue placeholder="Assign Mentor" />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {mentors.map(m => (
+                                                            <SelectItem key={m.id} value={m.id}>{m.firstName} {m.lastName}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Select
+                                                    value={pendingChange?.chiefMentorId || student.chiefMentorId || undefined}
+                                                    onValueChange={(val) => handleChange(student.id, 'chief', val)}
+                                                >
+                                                    <SelectTrigger className="w-[180px]">
+                                                        <SelectValue placeholder="Assign Chief" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {chiefMentors.map(m => (
                                                             <SelectItem key={m.id} value={m.id}>{m.firstName} {m.lastName}</SelectItem>
                                                         ))}
                                                     </SelectContent>

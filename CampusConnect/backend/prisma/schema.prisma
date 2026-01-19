@@ -78,7 +78,9 @@ model Student {
   year                Int       // 1, 2, 3, or 4
   department          String
   cgpa                Float?
+
   mentorId            String?
+  chiefMentorId       String?
   placementOfficerId  String?   // Nullable for 1st/2nd year
   resumeUrl           String?
   skills              Json?     // Array of skills
@@ -91,6 +93,7 @@ model Student {
   
   user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   mentor              Mentor?   @relation(fields: [mentorId], references: [id])
+  chiefMentor         Mentor?   @relation("ChiefMentor", fields: [chiefMentorId], references: [id])
   placementOfficer    PlacementOfficer? @relation(fields: [placementOfficerId], references: [id])
   
   assignmentSubmissions AssignmentSubmission[]
@@ -126,6 +129,7 @@ model Mentor {
   
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   students        Student[]
+  chiefMentorStudents Student[] @relation("ChiefMentor")
   assignments     Assignment[]
   studyMaterials  StudyMaterial[]
   approvedGatePasses GatePass[]

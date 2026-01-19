@@ -5,7 +5,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Lock, Mail, GraduationCap, UserCheck, Briefcase } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "../../components/ui/dialog"
+import { Eye, EyeOff, Lock, Mail, GraduationCap, UserCheck, Briefcase, AlertTriangle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
@@ -22,6 +29,7 @@ const Login = () => {
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showMaintenance, setShowMaintenance] = useState(false);
 
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -40,7 +48,11 @@ const Login = () => {
                 case 'PLACEMENT_OFFICER': navigate('/placement/dashboard'); break;
             }
         } catch (err: any) {
-            setError(err?.response?.data?.message || 'Invalid credentials');
+            if (err?.response?.status === 503) {
+                setShowMaintenance(true);
+            } else {
+                setError(err?.response?.data?.message || 'Invalid credentials');
+            }
         }
     };
 
@@ -138,6 +150,25 @@ const Login = () => {
                         </div>
                     </CardFooter>
                 </Card>
+
+                <Dialog open={showMaintenance} onOpenChange={setShowMaintenance}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2 text-amber-600">
+                                <AlertTriangle className="h-5 w-5" />
+                                System Under Maintenance
+                            </DialogTitle>
+                            <DialogDescription className="pt-2 text-base">
+                                The CampusConnect platform is currently undergoing scheduled maintenance to improve your experience.
+                                <br /><br />
+                                Please check back shortly. Students and Faculty cannot login at this time.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex justify-end pt-2">
+                            <Button onClick={() => setShowMaintenance(false)}>Close</Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     );

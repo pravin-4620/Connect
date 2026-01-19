@@ -369,7 +369,7 @@ export const getUserById = async (req, res) => {
  */
 export const createMapping = async (req, res) => {
     try {
-        const { studentId, mentorId, placementOfficerId } = req.body;
+        const { studentId, mentorId, chiefMentorId, placementOfficerId } = req.body;
 
         if (!studentId) {
             return error(res, 'Student ID is required', 400);
@@ -401,6 +401,17 @@ export const createMapping = async (req, res) => {
             }
         }
 
+        // Verify chief mentor exists
+        if (chiefMentorId) {
+            const chiefMentor = await prisma.mentor.findUnique({
+                where: { id: chiefMentorId }
+            });
+
+            if (!chiefMentor) {
+                return error(res, 'Chief Mentor not found', 404);
+            }
+        }
+
         // Verify placement officer exists
         if (placementOfficerId) {
             const placementOfficer = await prisma.placementOfficer.findUnique({
@@ -417,11 +428,15 @@ export const createMapping = async (req, res) => {
             where: { id: studentId },
             data: {
                 mentorId: mentorId || student.mentorId,
+                chiefMentorId: chiefMentorId || student.chiefMentorId,
                 placementOfficerId: placementOfficerId !== undefined ? placementOfficerId : student.placementOfficerId
             },
             include: {
                 user: true,
                 mentor: {
+                    include: { user: true }
+                },
+                chiefMentor: {
                     include: { user: true }
                 },
                 placementOfficer: {
@@ -524,6 +539,18 @@ export const getStudentMappings = async (req, res) => {
                     }
                 },
                 mentor: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                email: true,
+                                firstName: true,
+                                lastName: true
+                            }
+                        }
+                    }
+                },
+                chiefMentor: {
                     include: {
                         user: {
                             select: {

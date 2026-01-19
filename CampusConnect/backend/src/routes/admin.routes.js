@@ -42,8 +42,19 @@ router.delete('/users/:userId', requireRole('ADMIN'), deleteUser); // Restricted
 router.get('/users-export', exportUserData);
 router.get('/users-export-excel', exportUsersExcel);
 
+// System & Stats
+router.get('/statistics', getStatistics);
+router.get('/system-logs', getSystemLogs);
+router.get('/chats', getAdminChats);
+
 // Student Mappings
-// ...
+router.get('/mappings', getStudentMappings);
+router.post('/mappings', createMapping);
+router.put('/mappings/:mappingId', updateMapping);
+router.post('/mappings/bulk-assign', bulkAssignMentors);
+router.get('/mentors', getMentors);
+router.get('/placement-officers', getPlacementOfficers);
+
 // Settings
 router.get('/settings', getSettings);
 router.put('/settings', requireRole('ADMIN'), updateSettings); // Restricted
@@ -51,7 +62,7 @@ router.put('/settings', requireRole('ADMIN'), updateSettings); // Restricted
 // Announcements
 router.get('/announcements', getAnnouncements);
 router.post('/announcements', createAnnouncement);
-router.put('/announcements/:id/archive', archiveAnnouncement); // Added
+router.put('/announcements/:id/archive', archiveAnnouncement);
 router.delete('/announcements/:id', deleteAnnouncement);
 
 export default router;
