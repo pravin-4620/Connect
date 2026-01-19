@@ -78,14 +78,14 @@ const AdminMappings = () => {
 
             // Map Mentors
             const mentorList = allUsers
-                .filter(u => u.role === 'MENTOR' && u.mentor)
+                .filter(u => (u.role === 'MENTOR' || u.role === 'CHIEF_MENTOR') && u.mentor)
                 .map(u => ({
                     id: u.mentor?.id || '',
                     userId: u.id,
                     firstName: u.firstName,
                     lastName: u.lastName,
                     email: u.email,
-                    role: 'MENTOR'
+                    role: u.role
                 })).filter(m => m.id);
             setMentors(mentorList);
 
