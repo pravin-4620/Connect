@@ -17,3 +17,17 @@ export const formatFileSize = (bytes: number): string => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
+
+export const getFullImageUrl = (path: string | null | undefined): string | undefined => {
+    if (!path) return undefined;
+    if (path.startsWith('http') || path.startsWith('blob:')) return path;
+
+    // Get base URL from API URL (e.g., http://localhost:5000/api -> http://localhost:5000)
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+
+    // Ensure path starts with /
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+    return `${baseUrl}${cleanPath}`;
+};

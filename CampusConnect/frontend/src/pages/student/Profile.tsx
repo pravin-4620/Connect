@@ -18,6 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 import { z } from 'zod';
 import FileUpload from '../../components/common/FileUpload';
 import { useQuery } from '../../hooks/useQuery';
+import { getFullImageUrl } from '../../utils/fileUtils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 
@@ -207,7 +208,7 @@ const Profile = () => {
             <div className="flex flex-col md:flex-row gap-6 items-start">
                 <div className="relative group">
                     <Avatar className="h-32 w-32 border-4 border-background shadow-xl">
-                        <AvatarImage src={profilePicUrl || user?.profilePicture} alt="Profile" className="object-cover" />
+                        <AvatarImage src={getFullImageUrl(profilePicUrl || user?.profilePicture)} alt="Profile" className="object-cover" />
                         <AvatarFallback className="text-4xl font-bold">{user?.firstName?.[0]}{user?.lastName?.[0]}</AvatarFallback>
                     </Avatar>
 

@@ -14,6 +14,7 @@ import {
 } from "../ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import { SidebarNav } from './Sidebar';
+import { getFullImageUrl } from '../../utils/fileUtils';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
@@ -102,7 +103,7 @@ const Navbar = () => {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
                                 <Avatar className="h-9 w-9">
-                                    <AvatarImage src={user?.profilePicture} alt={`${user?.firstName} ${user?.lastName}`} className="object-cover" />
+                                    <AvatarImage src={getFullImageUrl(user?.profilePicture)} alt={`${user?.firstName} ${user?.lastName}`} className="object-cover" />
                                     <AvatarFallback className="bg-primary/10 text-primary font-bold">
                                         {user?.firstName?.[0]}{user?.lastName?.[0]}
                                     </AvatarFallback>
