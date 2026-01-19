@@ -18,45 +18,40 @@ import {
     exportUserData,
     getSystemLogs,
     deleteUser,
-    getStatistics
+    getStatistics,
+    toggleBlockUser,
+    exportUsersExcel,
+    getAdminChats,
+    archiveAnnouncement
 } from '../controllers/admin.controller.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// All routes require authentication and ADMIN role
+// All routes require authentication and ADMIN or SUB_ADMIN role
 router.use(authenticate);
-router.use(requireRole('ADMIN'));
+router.use(requireRole(['ADMIN', 'SUB_ADMIN']));
 
 // User Management
 router.post('/users', createUser);
 router.get('/users', getUsers);
 router.get('/users/:userId', getUserById);
 router.put('/users/:userId', updateUser);
-router.delete('/users/:userId', deleteUser);
+router.put('/users/:userId/block', toggleBlockUser);
+router.delete('/users/:userId', requireRole('ADMIN'), deleteUser); // Restricted
 router.get('/users-export', exportUserData);
+router.get('/users-export-excel', exportUsersExcel);
 
 // Student Mappings
-router.get('/mappings', getStudentMappings);
-router.post('/mappings', createMapping);
-router.put('/mappings/:mappingId', updateMapping);
-router.post('/mappings/bulk-mentors', bulkAssignMentors);
-
-// Get Mentors and Placement Officers
-router.get('/mentors', getMentors);
-router.get('/placement-officers', getPlacementOfficers);
-
-// Statistics
-router.get('/statistics', getStatistics);
-router.get('/logs', getSystemLogs);
-
+// ...
 // Settings
 router.get('/settings', getSettings);
-router.put('/settings', updateSettings);
+router.put('/settings', requireRole('ADMIN'), updateSettings); // Restricted
 
 // Announcements
 router.get('/announcements', getAnnouncements);
 router.post('/announcements', createAnnouncement);
+router.put('/announcements/:id/archive', archiveAnnouncement); // Added
 router.delete('/announcements/:id', deleteAnnouncement);
 
 export default router;

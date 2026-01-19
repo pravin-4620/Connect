@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { adminAPI } from '../../services/api';
+import { cn } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -32,7 +33,7 @@ import {
 } from '../../components/ui/table';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { toast } from 'sonner';
-import { Search, Plus, Trash2, Edit, Shield } from 'lucide-react';
+import { Search, Plus, Trash2, Edit, Shield, Ban, Download } from 'lucide-react';
 
 const AdminUsers = () => {
     const [users, setUsers] = useState<any[]>([]);
@@ -40,18 +41,31 @@ const AdminUsers = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Server-side filters
     const [roleFilter, setRoleFilter] = useState('all');
+    const [deptFilter, setDeptFilter] = useState('all');
+    const [yearFilter, setYearFilter] = useState('all');
+
     const [createRole, setCreateRole] = useState('STUDENT');
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [departments, setDepartments] = useState<string[]>(['CSE', 'ECE', 'MECH', 'CIVIL', 'IT']);
     const [credentials, setCredentials] = useState<any>(null);
+    const [downloading, setDownloading] = useState(false);
 
     const { register, handleSubmit, reset, setValue } = useForm();
 
     useEffect(() => {
-        fetchUsers();
         fetchDepartments();
     }, []);
+
+    // Debounced Fetch
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchUsers();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [roleFilter, deptFilter, yearFilter, searchQuery]);
 
     const fetchDepartments = async () => {
         try {
@@ -70,7 +84,13 @@ const AdminUsers = () => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const res = await adminAPI.getUsers();
+            const params: any = {};
+            if (roleFilter !== 'all') params.role = roleFilter;
+            if (deptFilter !== 'all') params.department = deptFilter;
+            if (yearFilter !== 'all') params.year = yearFilter;
+            if (searchQuery) params.search = searchQuery;
+
+            const res = await adminAPI.getUsers(params);
             const list = Array.isArray(res.data.data?.users) ? res.data.data.users : [];
             setUsers(list);
         } catch (error) {
@@ -103,7 +123,7 @@ const AdminUsers = () => {
             setValue('rollNumber', user.student.rollNumber);
             setValue('year', user.student.year);
             setValue('department', user.student.department);
-        } else if (user.role === 'MENTOR' && user.mentor) {
+        } else if ((user.role === 'MENTOR' || user.role === 'CHIEF_MENTOR') && user.mentor) {
             setValue('department', user.mentor.department);
             setValue('specialization', user.mentor.specialization);
             setValue('experienceYears', user.mentor.experienceYears);
@@ -119,18 +139,17 @@ const AdminUsers = () => {
         setIsSubmitting(true);
         try {
             if (selectedUser) {
-                const res = await adminAPI.updateUser(selectedUser.id, data);
+                await adminAPI.updateUser(selectedUser.id, data);
                 toast.success("User updated successfully");
-                setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, ...data, ...res.data.data?.user } : u));
+                fetchUsers();
                 setIsCreateOpen(false);
             } else {
                 const res = await adminAPI.createUser(data);
                 toast.success("User created successfully");
-                const newUser = res.data.data?.user || { id: 'temp-' + Date.now(), ...data };
-                setUsers(prev => [newUser, ...prev]);
                 if (res.data.data?.credentials) {
                     setCredentials(res.data.data.credentials);
                 }
+                fetchUsers();
                 setIsCreateOpen(false);
             }
             reset();
@@ -155,13 +174,39 @@ const AdminUsers = () => {
         }
     };
 
-    const filteredUsers = users.filter(user => {
-        const matchesSearch =
-            user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-        return matchesSearch && matchesRole;
-    });
+    const handleBlock = async (user: any) => {
+        const isBlocked = !user.isBlocked;
+        if (!confirm(`Are you sure you want to ${isBlocked ? 'block' : 'unblock'} this user?`)) return;
+        try {
+            await adminAPI.toggleBlockUser(user.id, isBlocked);
+            toast.success(`User ${isBlocked ? 'blocked' : 'unblocked'}`);
+            setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isBlocked } : u));
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update status");
+        }
+    };
+
+    const handleExport = async () => {
+        setDownloading(true);
+        try {
+            const res = await adminAPI.exportUsersExcel();
+            // Create blob link to download
+            const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to export users");
+        } finally {
+            setDownloading(false);
+        }
+    };
 
     const getRoleBadge = (role: string) => {
         switch (role) {
@@ -180,37 +225,64 @@ const AdminUsers = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-                    <p className="text-muted-foreground">Manage system users and verify roles</p>
+                    <p className="text-muted-foreground">Manage system users, roles, and access.</p>
                 </div>
-                <Button onClick={handleCreateOpen}>
-                    <Plus className="mr-2 h-4 w-4" /> Create User
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={handleExport} disabled={downloading}>
+                        <Download className="mr-2 h-4 w-4" /> {downloading ? 'Exporting...' : 'Export Excel'}
+                    </Button>
+                    <Button onClick={handleCreateOpen}>
+                        <Plus className="mr-2 h-4 w-4" /> Create User
+                    </Button>
+                </div>
             </div>
 
             <Card>
                 <CardHeader>
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                        <CardTitle>Total Users: {filteredUsers.length}</CardTitle>
-                        <div className="flex gap-2 w-full md:w-auto">
-                            <div className="relative w-full md:w-64">
+                        <CardTitle>Total Users: {users.length}</CardTitle>
+                        <div className="flex gap-2 w-full md:w-auto flex-wrap">
+                            <div className="relative w-full md:w-48">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Search users..."
+                                    placeholder="Search..."
                                     className="pl-8"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
                             <Select value={roleFilter} onValueChange={setRoleFilter}>
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Filter Role" />
+                                <SelectTrigger className="w-[140px]">
+                                    <SelectValue placeholder="Role" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Roles</SelectItem>
                                     <SelectItem value="STUDENT">Student</SelectItem>
                                     <SelectItem value="MENTOR">Mentor</SelectItem>
-                                    <SelectItem value="PLACEMENT_OFFICER">Placement Officer</SelectItem>
+                                    <SelectItem value="PLACEMENT_OFFICER">Placement</SelectItem>
                                     <SelectItem value="ADMIN">Admin</SelectItem>
+                                    <SelectItem value="SUB_ADMIN">Sub Admin</SelectItem>
+                                    <SelectItem value="CHIEF_MENTOR">Chief Mentor</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Select value={deptFilter} onValueChange={setDeptFilter}>
+                                <SelectTrigger className="w-[140px]">
+                                    <SelectValue placeholder="Dept" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Depts</SelectItem>
+                                    {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+
+                            <Select value={yearFilter} onValueChange={setYearFilter}>
+                                <SelectTrigger className="w-[100px]">
+                                    <SelectValue placeholder="Year" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Years</SelectItem>
+                                    {[1, 2, 3, 4].map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -224,34 +296,52 @@ const AdminUsers = () => {
                                     <TableHead>User</TableHead>
                                     <TableHead>Email</TableHead>
                                     <TableHead>Role</TableHead>
+                                    <TableHead>Status</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredUsers.map((user) => (
-                                    <TableRow key={user.id}>
-                                        <TableCell className="font-medium">
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                                                    <Shield className="h-4 w-4 text-muted-foreground" />
-                                                </div>
-                                                {user.firstName} {user.lastName}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{user.email}</TableCell>
-                                        <TableCell>{getRoleBadge(user.role)}</TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(user.id)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                {users.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                            No users found.
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                ) : (
+                                    users.map((user) => (
+                                        <TableRow key={user.id} className={user.isBlocked ? 'bg-red-50 dark:bg-red-900/10' : ''}>
+                                            <TableCell className="font-medium">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={cn("h-8 w-8 rounded-full flex items-center justify-center", user.isBlocked ? "bg-red-100 dark:bg-red-900" : "bg-muted")}>
+                                                        {user.isBlocked ? <Ban className="h-4 w-4 text-red-600" /> : <Shield className="h-4 w-4 text-muted-foreground" />}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold">{user.firstName} {user.lastName}</div>
+                                                        {user.student && <div className="text-xs text-muted-foreground">{user.student.department} - Year {user.student.year}</div>}
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>{user.email}</TableCell>
+                                            <TableCell>{getRoleBadge(user.role)}</TableCell>
+                                            <TableCell>
+                                                {user.isBlocked ? <Badge variant="destructive">Blocked</Badge> : <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleBlock(user)} title={user.isBlocked ? "Unblock" : "Block"}>
+                                                        {user.isBlocked ? <Shield className="h-4 w-4 text-green-600" /> : <Ban className="h-4 w-4 text-red-600" />}
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(user.id)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
                             </TableBody>
                         </Table>
                     </div>
@@ -299,6 +389,8 @@ const AdminUsers = () => {
                                     <SelectItem value="MENTOR">Mentor</SelectItem>
                                     <SelectItem value="PLACEMENT_OFFICER">Placement Officer</SelectItem>
                                     <SelectItem value="ADMIN">Admin</SelectItem>
+                                    <SelectItem value="SUB_ADMIN">Sub Admin</SelectItem>
+                                    <SelectItem value="CHIEF_MENTOR">Chief Mentor</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -334,7 +426,7 @@ const AdminUsers = () => {
                             </div>
                         )}
 
-                        {createRole === 'MENTOR' && (
+                        {(createRole === 'MENTOR' || createRole === 'CHIEF_MENTOR') && (
                             <div className="space-y-4 border-t pt-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="department">Department</Label>

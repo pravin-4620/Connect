@@ -175,11 +175,15 @@ export const adminAPI = {
     bulkAssignMentors: (assignments: { studentId: string, mentorId: string }[]) => api.post('/admin/mappings/bulk-mentors', { assignments }),
     getSettings: () => api.get('/admin/settings'),
     updateSettings: (data: any) => api.put('/admin/settings', { settings: data }),
-    getAnnouncements: () => api.get('/admin/announcements'),
+    getAnnouncements: (params?: any) => api.get('/admin/announcements', { params }),
     createAnnouncement: (data: any) => api.post('/admin/announcements', data),
     deleteAnnouncement: (id: string) => api.delete(`/admin/announcements/${id}`),
     exportUserData: () => api.get('/admin/users-export'),
+    exportUsersExcel: () => api.get('/admin/users-export-excel', { responseType: 'blob' }),
     getSystemLogs: () => api.get('/admin/logs'),
+    toggleBlockUser: (id: string, isBlocked: boolean) => api.put(`/admin/users/${id}/block`, { isBlocked }),
+    getChats: () => api.get('/admin/chats'),
+    archiveAnnouncement: (id: string) => api.put(`/admin/announcements/${id}/archive`),
 };
 
 export const chatAPI = {

@@ -8,6 +8,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Badge } from '../../components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import {
     Dialog,
     DialogContent,
@@ -25,7 +26,7 @@ import {
 } from '../../components/ui/select';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { toast } from 'sonner';
-import { Plus, Trash2, Calendar, Users } from 'lucide-react';
+import { Plus, Trash2, Calendar, Users, Archive } from 'lucide-react';
 import { format } from 'date-fns';
 
 const AdminAnnouncements = () => {
@@ -33,22 +34,24 @@ const AdminAnnouncements = () => {
     const [loading, setLoading] = useState(true);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [activeTab, setActiveTab] = useState('active');
 
     const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
 
     useEffect(() => {
         fetchAnnouncements();
-    }, []);
+    }, [activeTab]);
 
     const fetchAnnouncements = async () => {
         setLoading(true);
         try {
-            const res = await adminAPI.getAnnouncements();
+            const res = await adminAPI.getAnnouncements({ archived: activeTab === 'archived' });
             if (res.data?.success) {
                 setAnnouncements(res.data.data.announcements || []);
             }
         } catch (error) {
             console.error(error);
+            setAnnouncements([]);
             toast.error("Failed to fetch announcements");
         } finally {
             setLoading(false);
@@ -67,13 +70,27 @@ const AdminAnnouncements = () => {
         }
     };
 
+    const handleArchive = async (id: string) => {
+        if (!confirm("Are you sure you want to archive this announcement?")) return;
+        try {
+            await adminAPI.archiveAnnouncement(id);
+            setAnnouncements(prev => prev.filter(a => a.id !== id));
+            toast.success("Announcement archived");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to archive announcement");
+        }
+    };
+
     const onSubmit = async (data: any) => {
         setIsSubmitting(true);
         try {
             const res = await adminAPI.createAnnouncement(data);
             if (res.data?.success) {
                 toast.success("Announcement created successfully");
-                setAnnouncements(prev => [res.data.data.announcement, ...prev]);
+                if (activeTab === 'active') {
+                    setAnnouncements(prev => [res.data.data.announcement, ...prev]);
+                }
                 setIsCreateOpen(false);
                 reset();
                 setValue('priority', 'MEDIUM');
@@ -96,7 +113,58 @@ const AdminAnnouncements = () => {
         }
     };
 
-    if (loading) return <LoadingSpinner fullScreen={false} />;
+    const AnnouncementGrid = () => (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {announcements.length === 0 ? (
+                <div className="col-span-full text-center py-10 text-muted-foreground">
+                    No {activeTab} announcements found.
+                </div>
+            ) : (
+                announcements.map((announcement) => (
+                    <Card key={announcement.id} className="flex flex-col animate-in fade-in duration-300">
+                        <CardHeader>
+                            <div className="flex justify-between items-start gap-2">
+                                <div className="space-y-1">
+                                    <CardTitle className="line-clamp-2">{announcement.title}</CardTitle>
+                                    <div className="flex gap-2">
+                                        <Badge variant="secondary" className={getPriorityColor(announcement.priority)}>{announcement.priority}</Badge>
+                                        <Badge variant="outline">{announcement.targetRole || 'ALL USERS'}</Badge>
+                                    </div>
+                                </div>
+                                <div className="flex gap-1">
+                                    {activeTab === 'active' && (
+                                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-blue-600 shrink-0" onClick={() => handleArchive(announcement.id)} title="Archive">
+                                            <Archive className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleDelete(announcement.id)} title="Delete">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="flex-1">
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
+                                {announcement.content}
+                            </p>
+                        </CardContent>
+                        <CardFooter className="border-t pt-4 text-xs text-muted-foreground flex justify-between">
+                            <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(announcement.createdAt), 'MMM d, yyyy')}
+                            </div>
+                            {announcement.createdBy && (
+                                <div className="flex items-center gap-1">
+                                    <Users className="h-3 w-3" />
+                                    {announcement.createdBy.firstName}
+                                </div>
+                            )}
+                        </CardFooter>
+                    </Card>
+                ))
+            )}
+        </div>
+    );
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -110,49 +178,16 @@ const AdminAnnouncements = () => {
                 </Button>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {announcements.length === 0 ? (
-                    <div className="col-span-full text-center py-10 text-muted-foreground">
-                        No announcements found. create one to get started.
-                    </div>
-                ) : (
-                    announcements.map((announcement) => (
-                        <Card key={announcement.id} className="flex flex-col">
-                            <CardHeader>
-                                <div className="flex justify-between items-start gap-2">
-                                    <div className="space-y-1">
-                                        <CardTitle className="line-clamp-2">{announcement.title}</CardTitle>
-                                        <div className="flex gap-2">
-                                            <Badge variant="secondary" className={getPriorityColor(announcement.priority)}>{announcement.priority}</Badge>
-                                            <Badge variant="outline">{announcement.targetRole || 'ALL USERS'}</Badge>
-                                        </div>
-                                    </div>
-                                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleDelete(announcement.id)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="flex-1">
-                                <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
-                                    {announcement.content}
-                                </p>
-                            </CardContent>
-                            <CardFooter className="border-t pt-4 text-xs text-muted-foreground flex justify-between">
-                                <div className="flex items-center gap-1">
-                                    <Calendar className="h-3 w-3" />
-                                    {format(new Date(announcement.createdAt), 'MMM d, yyyy')}
-                                </div>
-                                {announcement.createdBy && (
-                                    <div className="flex items-center gap-1">
-                                        <Users className="h-3 w-3" />
-                                        {announcement.createdBy.firstName}
-                                    </div>
-                                )}
-                            </CardFooter>
-                        </Card>
-                    ))
-                )}
-            </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList>
+                    <TabsTrigger value="active">Active Announcements</TabsTrigger>
+                    <TabsTrigger value="archived">Archived History</TabsTrigger>
+                </TabsList>
+
+                <div className="mt-6">
+                    {loading ? <LoadingSpinner fullScreen={false} /> : <AnnouncementGrid />}
+                </div>
+            </Tabs>
 
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                 <DialogContent>

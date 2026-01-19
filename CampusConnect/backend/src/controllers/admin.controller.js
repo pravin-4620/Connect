@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import ExcelJS from 'exceljs';
 import { success, error } from '../utils/response.js';
 
 const prisma = new PrismaClient();
@@ -49,8 +50,8 @@ export const createUser = async (req, res) => {
             return error(res, 'Email, first name, last name, and role are required', 400);
         }
 
-        if (!['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER'].includes(role)) {
-            return error(res, 'Invalid role. Must be STUDENT, MENTOR, or PLACEMENT_OFFICER', 400);
+        if (!['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER', 'SUB_ADMIN', 'CHIEF_MENTOR'].includes(role)) {
+            return error(res, 'Invalid role. Available: STUDENT, MENTOR, PLACEMENT_OFFICER, SUB_ADMIN, CHIEF_MENTOR', 400);
         }
 
         // Check if user already exists
@@ -104,15 +105,15 @@ export const createUser = async (req, res) => {
                         department
                     }
                 });
-            } else if (role === 'MENTOR') {
-                if (!department) {
+            } else if (role === 'MENTOR' || role === 'CHIEF_MENTOR') {
+                if (!department && role === 'MENTOR') {
                     throw new Error('Department is required for mentors');
                 }
 
                 await prisma.mentor.create({
                     data: {
                         userId: user.id,
-                        department,
+                        department: department || 'General',
                         specialization,
                         experienceYears: experienceYears ? parseInt(experienceYears) : null
                     }
@@ -274,7 +275,7 @@ export const updateUser = async (req, res) => {
  */
 export const getUsers = async (req, res) => {
     try {
-        const { role, search } = req.query;
+        const { role, search, department, year } = req.query;
 
         const where = {};
 
@@ -288,6 +289,24 @@ export const getUsers = async (req, res) => {
                 { firstName: { contains: search, mode: 'insensitive' } },
                 { lastName: { contains: search, mode: 'insensitive' } }
             ];
+        }
+
+        if (department) {
+            const deptFilter = { equals: department, mode: 'insensitive' };
+            where.AND = where.AND || [];
+            where.AND.push({
+                OR: [
+                    { student: { department: deptFilter } },
+                    { mentor: { department: deptFilter } },
+                    { placementOfficer: { department: deptFilter } }
+                ]
+            });
+        }
+
+        if (year) {
+            where.student = {
+                year: parseInt(year)
+            };
         }
 
         const users = await prisma.user.findMany({
@@ -673,6 +692,10 @@ export const getStatistics = async (req, res) => {
             }
         });
 
+        const activeUsers24h = await prisma.user.count({
+            where: { updatedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }
+        });
+
         return success(res, {
             users: {
                 totalStudents,
@@ -704,6 +727,13 @@ export const getStatistics = async (req, res) => {
                 total: totalAssignments,
                 totalSubmissions,
                 submissionRate: totalAssignments > 0 ? ((totalSubmissions / totalAssignments) * 100).toFixed(2) : 0
+            },
+            technical: {
+                activeUsers24h,
+                serverUptime: process.uptime(),
+                nodeVersion: process.version,
+                platform: process.platform,
+                memoryUsage: process.memoryUsage()
             },
             recentUsers
         }, 'Statistics fetched');
@@ -833,7 +863,11 @@ export const updateSettings = async (req, res) => {
  */
 export const getAnnouncements = async (req, res) => {
     try {
+        const { archived } = req.query;
+        const isArchived = archived === 'true';
+
         const announcements = await prisma.announcement.findMany({
+            where: { isArchived },
             orderBy: { createdAt: 'desc' },
             include: {
                 createdBy: {
@@ -933,5 +967,131 @@ export const getSystemLogs = async (req, res) => {
     } catch (err) {
         console.error('Get logs error:', err);
         return error(res, 'Failed to fetch logs', 500);
+    }
+};
+
+/**
+ * Toggle user block status
+ */
+export const toggleBlockUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { isBlocked } = req.body;
+
+        if (typeof isBlocked !== 'boolean') return error(res, 'isBlocked status required', 400);
+
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return error(res, 'User not found', 404);
+        if (user.role === 'ADMIN') return error(res, 'Cannot block super admin', 403);
+
+        const updated = await prisma.user.update({
+            where: { id: userId },
+            data: { isBlocked },
+            select: { id: true, email: true, isBlocked: true }
+        });
+
+        return success(res, { user: updated }, `User ${isBlocked ? 'blocked' : 'unblocked'}`);
+    } catch (err) {
+        console.error('Block user error:', err);
+        return error(res, 'Failed to update block status', 500);
+    }
+};
+
+/**
+ * Archive announcement
+ */
+export const archiveAnnouncement = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.announcement.update({
+            where: { id },
+            data: { isArchived: true }
+        });
+        return success(res, null, 'Announcement archived');
+    } catch (err) {
+        console.error('Archive announcement error:', err);
+        return error(res, 'Failed to archive announcement', 500);
+    }
+};
+
+/**
+ * Export users to Excel
+ */
+export const exportUsersExcel = async (req, res) => {
+    try {
+        const users = await prisma.user.findMany({
+            include: { student: true, mentor: true, placementOfficer: true }
+        });
+
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Users');
+
+        sheet.columns = [
+            { header: 'ID', key: 'id', width: 30 },
+            { header: 'Role', key: 'role', width: 15 },
+            { header: 'Email', key: 'email', width: 25 },
+            { header: 'Name', key: 'name', width: 20 },
+            { header: 'Phone', key: 'phone', width: 15 },
+            { header: 'Status', key: 'status', width: 10 },
+            { header: 'Department', key: 'department', width: 15 },
+            { header: 'Details', key: 'details', width: 30 },
+            { header: 'Last Login', key: 'lastLogin', width: 20 },
+        ];
+
+        users.forEach(u => {
+            const row = {
+                id: u.id,
+                role: u.role,
+                email: u.email,
+                name: `${u.firstName} ${u.lastName}`,
+                phone: u.phone || '-',
+                status: u.isBlocked ? 'BLOCKED' : 'ACTIVE',
+                department: '',
+                details: '',
+                lastLogin: u.updatedAt ? u.updatedAt.toISOString().split('T')[0] : '-'
+            };
+
+            if (u.student) {
+                row.department = u.student.department;
+                row.details = `Year: ${u.student.year}, Roll: ${u.student.rollNumber}`;
+            } else if (u.mentor) {
+                row.department = u.mentor.department;
+                row.details = `Spec: ${u.mentor.specialization || '-'}`;
+            } else if (u.placementOfficer) {
+                row.department = u.placementOfficer.department || '-';
+                row.details = `Desig: ${u.placementOfficer.designation || '-'}`;
+            }
+
+            sheet.addRow(row);
+        });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=users.xlsx');
+
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (err) {
+        console.error('Export Excel error:', err);
+        return error(res, 'Failed to export Excel', 500);
+    }
+};
+
+/**
+ * Get all chats for admin view
+ */
+export const getAdminChats = async (req, res) => {
+    try {
+        const messages = await prisma.message.findMany({
+            take: 100,
+            orderBy: { sentAt: 'desc' },
+            include: {
+                sender: { select: { firstName: true, lastName: true, role: true } },
+                receiver: { select: { firstName: true, lastName: true, role: true } }
+            }
+        });
+        return success(res, { messages }, 'Chats fetched');
+    } catch (err) {
+        console.error('Get admin chats error:', err);
+        return error(res, 'Failed to fetch chats', 500);
     }
 };

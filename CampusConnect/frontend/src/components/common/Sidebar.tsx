@@ -120,6 +120,7 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
                     { icon: UserCheck, label: 'Mappings', path: '/admin/mappings' },
                     { icon: BarChart, label: 'System Stats', path: '/admin/statistics' },
                     { icon: Megaphone, label: 'Announcements', path: '/admin/announcements' },
+                    { icon: MessageSquare, label: 'Chat Logs', path: '/admin/chats' },
                     { icon: Settings, label: 'Settings', path: '/admin/settings' },
                 ];
             default:

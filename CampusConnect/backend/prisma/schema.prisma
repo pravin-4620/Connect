@@ -14,6 +14,8 @@ enum Role {
   MENTOR
   PLACEMENT_OFFICER
   ADMIN
+  CHIEF_MENTOR
+  SUB_ADMIN
 }
 
 enum EventStatus {
@@ -54,6 +56,7 @@ model User {
   gmailConnected    Boolean   @default(false)
   gmailAccessToken  String?
   gmailRefreshToken String?
+  isBlocked         Boolean   @default(false)
   preferences       Json?     // Stores { emailNotifs, pushNotifs, theme }
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -340,6 +343,7 @@ model Announcement {
   createdById String
   targetRole  Role?    // If null, targets ALL
   priority    Priority @default(MEDIUM)
+  isArchived  Boolean  @default(false)
   
   createdBy   User @relation(fields: [createdById], references: [id], onDelete: Cascade)
   

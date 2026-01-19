@@ -119,43 +119,16 @@ const Settings = () => {
 
     const handleExportUsers = async () => {
         try {
-            const res = await adminAPI.exportUserData();
-            const users = res.data.data.users;
-
-            // Convert to CSV
-            const headers = ['ID', 'Role', 'Email', 'First Name', 'Last Name', 'Phone', 'Details'];
-            const csvRows = [headers.join(',')];
-
-            for (const user of users) {
-                let details = '';
-                if (user.role === 'STUDENT' && user.student) {
-                    details = `Roll: ${user.student.rollNumber} | Year: ${user.student.year} | Dept: ${user.student.department}`;
-                } else if (user.role === 'MENTOR' && user.mentor) {
-                    details = `Dept: ${user.mentor.department} | Exp: ${user.mentor.experienceYears}y`;
-                } else if (user.role === 'PLACEMENT_OFFICER' && user.placementOfficer) {
-                    details = `role: ${user.placementOfficer.designation || 'Officer'}`;
-                }
-
-                const row = [
-                    user.id,
-                    user.role,
-                    user.email,
-                    user.firstName,
-                    user.lastName,
-                    user.phone || '',
-                    `"${details}"` // Quote details to handle commas
-                ];
-                csvRows.push(row.join(','));
-            }
-
-            const csvString = csvRows.join('\n');
-            const blob = new Blob([csvString], { type: 'text/csv' });
+            const res = await adminAPI.exportUsersExcel();
+            const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
+            const link = document.createElement('a');
             link.href = url;
-            link.download = `users_export_${new Date().toISOString().split('T')[0]}.csv`;
+            link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+            document.body.appendChild(link);
             link.click();
-            toast.success("Users exported as CSV");
+            link.remove();
+            toast.success("Users exported as Excel");
         } catch (error) {
             console.error(error);
             toast.error("Export failed");
@@ -345,7 +318,7 @@ const Settings = () => {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <Button variant="outline" className="w-full justify-start" onClick={handleExportUsers}>
-                                    <Download className="mr-2 h-4 w-4" /> Export All User Data (JSON)
+                                    <Download className="mr-2 h-4 w-4" /> Export Users (Excel)
                                 </Button>
                                 <Button variant="outline" className="w-full justify-start" onClick={handleDownloadLogs}>
                                     <Activity className="mr-2 h-4 w-4" /> Download System Logs

@@ -42,6 +42,18 @@ export const login = async (req, res) => {
             return error(res, 'Invalid credentials', 401);
         }
 
+        // Check if blocked
+        if (user.isBlocked) {
+            return error(res, 'Account blocked. Contact admin.', 403);
+        }
+
+        // Check maintenance mode
+        const maintenance = await prisma.systemSettings.findUnique({ where: { key: 'maintenance_mode' } });
+        // Allow ADMIN, SUB_ADMIN, CHIEF_MENTOR to bypass (though ADMIN usually uses adminLogin)
+        if (maintenance?.value === 'true' && !['ADMIN', 'SUB_ADMIN', 'CHIEF_MENTOR'].includes(user.role)) {
+            return error(res, 'Under maintenance', 503);
+        }
+
         // Check if admin trying to login via regular login
         if (user.role === 'ADMIN') {
             return error(res, 'Please use admin login', 403);
@@ -88,8 +100,12 @@ export const adminLogin = async (req, res) => {
             where: { email: email.toLowerCase() }
         });
 
-        if (!user || user.role !== 'ADMIN') {
+        if (!user || !['ADMIN', 'SUB_ADMIN', 'CHIEF_MENTOR'].includes(user.role)) {
             return error(res, 'Invalid admin credentials', 401);
+        }
+
+        if (user.isBlocked) {
+            return error(res, 'Account blocked. Contact admin.', 403);
         }
 
         // Verify password

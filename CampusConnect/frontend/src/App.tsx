@@ -49,6 +49,7 @@ const PlacementProfile = lazy(() => import('./pages/placement/Profile'));
 const SkillsTests = lazy(() => import('./pages/placement/SkillsTests'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminMappings = lazy(() => import('./pages/admin/Mappings'));
+const AdminChats = lazy(() => import('./pages/admin/Chats'));
 const PlacementInterviews = lazy(() => import('./pages/placement/Interviews'));
 
 const GmailConnected = lazy(() => import('./pages/auth/GmailConnected'));
@@ -367,6 +368,13 @@ function App() {
                     <ProtectedRoute allowedRoles={['ADMIN']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <AdminProfile />
+                      </Suspense>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="chats" element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                      <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
+                        <AdminChats />
                       </Suspense>
                     </ProtectedRoute>
                   } />
