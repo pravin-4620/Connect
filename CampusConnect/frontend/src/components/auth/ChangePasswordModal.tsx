@@ -21,7 +21,7 @@ interface ChangePasswordModalProps {
 }
 
 const ChangePasswordModal = ({ isOpen: externalIsOpen, onClose: externalOnClose }: ChangePasswordModalProps = {}) => {
-    const { user, updateProfile } = useAuth();
+    const { user, updateUser } = useAuth();
     const [internalOpen, setInternalOpen] = useState(false);
     const [showCurrent, setShowCurrent] = useState(false);
     const [showNew, setShowNew] = useState(false);
@@ -67,7 +67,7 @@ const ChangePasswordModal = ({ isOpen: externalIsOpen, onClose: externalOnClose 
 
             // Only reload if it was a forced first login, otherwise just toast success
             if (user?.isFirstLogin) {
-                updateProfile({ isFirstLogin: false });
+                updateUser({ isFirstLogin: false });
                 setInternalOpen(false);
                 toast.success('Password changed successfully');
             } else {
