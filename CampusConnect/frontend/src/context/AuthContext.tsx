@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, Role } from '../types';
 import { authAPI } from '../services/api';
 import { socketService } from '../services/socket';
@@ -63,14 +63,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const logout = () => {
+    const logout = useCallback(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
         setToken(null);
         socketService.disconnect();
         window.location.href = '/login';
-    };
+    }, []);
 
     const hasRole = (roles: Role[]) => {
         return user ? roles.includes(user.role) : false;
