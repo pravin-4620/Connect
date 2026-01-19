@@ -103,14 +103,33 @@ const Layout = () => {
                 }
             };
 
+            // Socket listener for immediate update
+            const handleMaintenanceStatus = (data: any) => {
+                if (data.maintenanceMode) {
+                    if (['ADMIN', 'SUB_ADMIN', 'CHIEF_MENTOR'].includes(user.role)) {
+                        return;
+                    }
+                    toast.error('System is now under maintenance. You will be logged out.', {
+                        duration: 5000,
+                    });
+                    setTimeout(() => {
+                        logout();
+                    }, 2000);
+                }
+            };
+
             // Check immediately
             checkMaintenance();
 
             // Then check every 30 seconds
             const maintenanceInterval = setInterval(checkMaintenance, 30000);
 
+            // Listen for socket event
+            socketService.on('maintenance:status', handleMaintenanceStatus);
+
             return () => {
                 clearInterval(maintenanceInterval);
+                socketService.off('maintenance:status', handleMaintenanceStatus);
             };
         }
     }, [user, logout]);

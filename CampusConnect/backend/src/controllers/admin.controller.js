@@ -1122,3 +1122,38 @@ export const getAdminChats = async (req, res) => {
         return error(res, 'Failed to fetch chats', 500);
     }
 };
+
+/**
+ * Update system settings
+ */
+export const updateSystemSettings = async (req, res) => {
+    try {
+        const { key, value } = req.body;
+
+        if (!key || value === undefined) {
+            return error(res, 'Key and value are required', 400);
+        }
+
+        const setting = await prisma.systemSettings.upsert({
+            where: { key },
+            update: { value: String(value) },
+            create: { key, value: String(value) }
+        });
+
+        // If maintenance mode is toggled, emit socket event
+        if (key === 'maintenance_mode') {
+            const io = req.app.get('io');
+            if (io) {
+                const isActive = value === 'true' || value === true;
+                io.emit('maintenance:status', {
+                    maintenanceMode: isActive
+                });
+            }
+        }
+
+        return success(res, { setting }, 'System setting updated');
+    } catch (err) {
+        console.error('Update system settings error:', err);
+        return error(res, 'Failed to update system settings', 500);
+    }
+};

@@ -82,6 +82,19 @@ export const getDashboard = async (req, res) => {
             }
         });
 
+        // Get announcements
+        const announcements = await prisma.announcement.findMany({
+            where: {
+                isArchived: false,
+                OR: [
+                    { targetRole: null },
+                    { targetRole: 'STUDENT' }
+                ]
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 5
+        });
+
         return success(res, {
             student: {
                 ...student,
@@ -97,7 +110,8 @@ export const getDashboard = async (req, res) => {
                 eligiblePlacements,
                 pendingGatePasses
             },
-            recentActivity
+            recentActivity,
+            announcements
         }, 'Dashboard stats fetched');
     } catch (err) {
         console.error('Get dashboard error:', err);
