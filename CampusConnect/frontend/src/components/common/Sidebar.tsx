@@ -240,7 +240,7 @@ const Sidebar = () => {
                 {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
 
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col">
                 <SidebarNav collapsed={collapsed} />
             </div>
         </div>
