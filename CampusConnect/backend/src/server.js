@@ -58,8 +58,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
-// Serve static uploads
-app.use('/uploads', express.static('uploads'));
+// Note: File uploads now handled by Cloudinary (cloud storage)
 
 // Health check route
 app.get('/', (req, res) => {
