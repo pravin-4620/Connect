@@ -134,9 +134,9 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
     const justifyClass = collapsed ? "justify-center" : "";
 
     return (
-        <div className="flex flex-col h-full bg-card text-card-foreground">
+        <div className="flex flex-col h-full min-h-0 bg-card text-card-foreground">
             {/* Header */}
-            <div className={cn("p-4 border-b border-border flex items-center h-16", justifyClass, !collapsed && "justify-between")}>
+            <div className={cn("p-4 border-b border-border flex items-center h-16 flex-shrink-0", justifyClass, !collapsed && "justify-between")}>
                 <div className={cn("flex items-center gap-2 font-bold text-xl text-primary truncate", collapsed && "justify-center w-full")}>
                     <GraduationCap className="h-6 w-6 flex-shrink-0" />
                     {showLogoText && <span>CampusConnect</span>}
@@ -144,7 +144,7 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            <nav className="flex-1 min-h-0 p-4 space-y-2 overflow-y-auto">
                 {menuItems.map((item) => (
                     <NavLink
                         key={item.path}
@@ -203,7 +203,7 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
             </nav>
 
             {/* Footer / Logout */}
-            <div className="p-4 border-t border-border">
+            <div className="p-4 border-t border-border flex-shrink-0">
                 <button
                     onClick={() => {
                         logout();
