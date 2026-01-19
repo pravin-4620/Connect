@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Bell, User, LogOut, Settings, Menu, MessageCircle } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -99,20 +100,13 @@ const Navbar = () => {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 overflow-hidden">
-                                {user?.profilePicture ? (
-                                    <img
-                                        src={user.profilePicture}
-                                        alt={`${user.firstName} ${user.lastName}`}
-                                        className="h-full w-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="h-full w-full bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center">
-                                        <span className="text-primary font-bold">
-                                            {user?.firstName?.[0]}{user?.lastName?.[0]}
-                                        </span>
-                                    </div>
-                                )}
+                            <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={user?.profilePicture} alt={`${user?.firstName} ${user?.lastName}`} className="object-cover" />
+                                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                                    </AvatarFallback>
+                                </Avatar>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
