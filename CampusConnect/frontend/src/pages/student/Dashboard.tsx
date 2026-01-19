@@ -17,17 +17,21 @@ import {
 } from "recharts";
 import type { DashboardStats } from '../../types';
 
-// Fallback Mock Data
-const MOCK_ACTIVITIES = [
-    { id: 1, type: 'assignment', description: 'Submitted "Data Structures" Assignment', date: new Date().toISOString() },
-    { id: 2, type: 'event', description: 'Registered for "Tech Talk 2024"', date: new Date(Date.now() - 86400000).toISOString() },
-    { id: 3, type: 'placement', description: 'Applied to "Google" Drive', date: new Date(Date.now() - 172800000).toISOString() },
-];
+interface Activity {
+    id: number | string;
+    type: string;
+    description: string;
+    date?: string; // from mock
+    createdAt?: string; // from backend
+}
 
-const MOCK_ANNOUNCEMENTS = [
-    { id: 1, title: 'Placement Drive: Microsoft', date: new Date().toISOString(), priority: 'HIGH' },
-    { id: 2, title: 'Holiday Notice', date: new Date(Date.now() - 86400000).toISOString(), priority: 'LOW' },
-];
+interface Announcement {
+    id: number | string;
+    title: string;
+    date?: string; // from mock
+    createdAt?: string; // from backend
+    priority?: string;
+}
 
 const CGPA_DATA = [
     { semester: 'Sem 1', cgpa: 7.8 },
@@ -40,8 +44,8 @@ const CGPA_DATA = [
 
 interface DashboardData {
     stats: DashboardStats;
-    activities: typeof MOCK_ACTIVITIES;
-    announcements: typeof MOCK_ANNOUNCEMENTS;
+    activities: Activity[];
+    announcements: Announcement[];
 }
 
 const StudentDashboard = () => {
@@ -190,7 +194,7 @@ const StudentDashboard = () => {
                                         <div className="pb-4">
                                             <p className="text-sm font-medium leading-none">{activity.description}</p>
                                             <p className="text-xs text-muted-foreground mt-1">
-                                                {format(new Date(activity.date), 'MMM d, yyyy h:mm a')}
+                                                {format(new Date(activity.date || activity.createdAt || new Date()), 'MMM d, yyyy h:mm a')}
                                             </p>
                                         </div>
                                     </div>
@@ -257,14 +261,14 @@ const StudentDashboard = () => {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {announcements.map((announcement) => (
+                            {announcements.map((announcement: any) => (
                                 <div key={announcement.id} className="flex items-start space-x-3 p-3 bg-muted/40 rounded-lg">
                                     {/* Priority Dot */}
                                     <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${announcement.priority === 'HIGH' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-blue-500'}`} />
                                     <div>
                                         <p className="text-sm font-medium leading-snug">{announcement.title}</p>
                                         <p className="text-xs text-muted-foreground mt-1">
-                                            {format(new Date(announcement.date), 'MMM d')} • <span className={announcement.priority === 'HIGH' ? 'text-red-500 font-medium' : ''}>{announcement.priority}</span>
+                                            {format(new Date(announcement.createdAt || announcement.date || new Date()), 'MMM d')} • <span className={announcement.priority === 'HIGH' ? 'text-red-500 font-medium' : ''}>{announcement.priority || 'NORMAL'}</span>
                                         </p>
                                     </div>
                                 </div>

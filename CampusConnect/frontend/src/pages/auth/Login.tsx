@@ -116,14 +116,25 @@ const Login = () => {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-            <div className="w-full max-w-md space-y-8">
-                <div className="text-center">
-                    <h1 className="text-4xl font-extrabold text-primary mb-2 tracking-tight">CampusConnect</h1>
-                    <p className="text-muted-foreground">Your academic journey, unified.</p>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950 px-4 py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+            {/* Abstract Background Shapes */}
+            <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-purple-200/30 rounded-full blur-3xl -z-10" />
+            <div className="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl -z-10" />
+
+            <div className="w-full max-w-md space-y-8 relative z-10">
+                <div className="text-center space-y-2">
+                    <div className="inline-flex items-center justify-center p-3 bg-white rounded-2xl shadow-sm mb-4 ring-1 ring-gray-100">
+                        <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+                            <GraduationCap className="h-5 w-5 text-white" />
+                        </div>
+                    </div>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">CampusConnect</h1>
+                    <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                        Your unified academic platform for seamless collaboration and growth.
+                    </p>
                 </div>
 
-                <Card className="shadow-lg border-0 ring-1 ring-gray-200">
+                <Card className="shadow-xl border-gray-100/50 backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 dark:border-gray-800">
                     <CardHeader className="space-y-1">
                         <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
                         <CardDescription className="text-center">
