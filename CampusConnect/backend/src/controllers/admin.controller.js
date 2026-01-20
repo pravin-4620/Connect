@@ -859,29 +859,67 @@ export const getSettings = async (req, res) => {
  */
 export const updateSettings = async (req, res) => {
     try {
-        const { settings } = req.body; // Expect key-value object
+        const updates = req.body;
 
-        if (!settings) return error(res, 'Settings data required', 400);
+        // Map frontend camelCase to backend snake_case keys
+        const KEY_MAPPING = {
+            'maintenanceMode': 'maintenance_mode',
+        };
 
-        for (const [key, value] of Object.entries(settings)) {
-            const isJson = typeof value === 'object' && value !== null;
+        let maintenanceUpdated = false;
+        let newMaintenanceStatus = false;
+
+        // Helper to update a single setting
+        const updateSetting = async (rawKey, rawValue) => {
+            const key = KEY_MAPPING[rawKey] || rawKey;
+            let value = rawValue;
+
+            // Handle objects (like smtpConfig)
+            if (typeof value === 'object' && value !== null) {
+                value = JSON.stringify(value);
+            } else {
+                value = String(value);
+            }
+
             await prisma.systemSettings.upsert({
                 where: { key },
-                update: {
-                    value: isJson ? null : String(value),
-                    jsonValue: isJson ? value : null
-                },
-                create: {
-                    key,
-                    value: isJson ? null : String(value),
-                    jsonValue: isJson ? value : null
-                }
+                update: { value },
+                create: { key, value }
             });
+
+            if (key === 'maintenance_mode') {
+                maintenanceUpdated = true;
+                newMaintenanceStatus = value === 'true';
+            }
+        };
+
+        // Check if it's a single key-value update (legacy/simple) or bulk object
+        if (updates.key && updates.value !== undefined && Object.keys(updates).length === 2) {
+            await updateSetting(updates.key, updates.value);
+        } else {
+            // Treat as bulk object key-value pairs
+            // If the frontend wrapped it in 'settings', unwrap it (backward compatibility)
+            const dataToUpdate = updates.settings || updates;
+
+            for (const [key, value] of Object.entries(dataToUpdate)) {
+                await updateSetting(key, value);
+            }
         }
-        return success(res, null, 'Settings updated');
+
+        // If maintenance mode is toggled, emit socket event
+        if (maintenanceUpdated) {
+            const io = req.app.get('io');
+            if (io) {
+                io.emit('maintenance:status', {
+                    maintenanceMode: newMaintenanceStatus
+                });
+            }
+        }
+
+        return success(res, null, 'System settings updated');
     } catch (err) {
         console.error('Update settings error:', err);
-        return error(res, 'Failed to update settings', 500);
+        return error(res, 'Failed to update system settings', 500);
     }
 };
 
@@ -1126,66 +1164,4 @@ export const getAdminChats = async (req, res) => {
 /**
  * Update system settings
  */
-export const updateSystemSettings = async (req, res) => {
-    try {
-        const updates = req.body;
 
-        // Map frontend camelCase to backend snake_case keys
-        const KEY_MAPPING = {
-            'maintenanceMode': 'maintenance_mode',
-        };
-
-        let maintenanceUpdated = false;
-        let newMaintenanceStatus = false;
-
-        // Helper to update a single setting
-        const updateSetting = async (rawKey, rawValue) => {
-            const key = KEY_MAPPING[rawKey] || rawKey;
-            let value = rawValue;
-
-            // Handle objects (like smtpConfig)
-            if (typeof value === 'object' && value !== null) {
-                value = JSON.stringify(value);
-            } else {
-                value = String(value);
-            }
-
-            await prisma.systemSettings.upsert({
-                where: { key },
-                update: { value },
-                create: { key, value }
-            });
-
-            if (key === 'maintenance_mode') {
-                maintenanceUpdated = true;
-                newMaintenanceStatus = value === 'true';
-            }
-        };
-
-        // Check if it's a single key-value update (legacy/simple) or bulk object
-        // If body has exactly 'key' and 'value', and we are not sending 'key' as a setting itself
-        if (updates.key && updates.value !== undefined && Object.keys(updates).length === 2) {
-            await updateSetting(updates.key, updates.value);
-        } else {
-            // Treat as bulk object key-value pairs
-            for (const [key, value] of Object.entries(updates)) {
-                await updateSetting(key, value);
-            }
-        }
-
-        // If maintenance mode is toggled, emit socket event
-        if (maintenanceUpdated) {
-            const io = req.app.get('io');
-            if (io) {
-                io.emit('maintenance:status', {
-                    maintenanceMode: newMaintenanceStatus
-                });
-            }
-        }
-
-        return success(res, null, 'System settings updated');
-    } catch (err) {
-        console.error('Update system settings error:', err);
-        return error(res, 'Failed to update system settings', 500);
-    }
-};
