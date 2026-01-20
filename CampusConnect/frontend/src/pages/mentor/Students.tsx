@@ -190,14 +190,7 @@ const MentorStudents = () => {
                                                         <DropdownMenuItem onClick={() => navigate(`/mentor/students/${student.id}`)}>
                                                             <Eye className="mr-2 h-4 w-4" /> View Details
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => {
-                                                            setSelectedStudent(student);
-                                                            setNewAttendance(student.attendance || 0);
-                                                            setAttendanceMode('daily'); // Default to daily
-                                                            setIsAttendanceOpen(true);
-                                                        }}>
-                                                            <FileText className="mr-2 h-4 w-4" /> Mark Attendance
-                                                        </DropdownMenuItem>
+
                                                         <DropdownMenuItem onClick={() => window.location.href = `mailto:${student.user?.email}`}>
                                                             <Mail className="mr-2 h-4 w-4" /> Send Email
                                                         </DropdownMenuItem>

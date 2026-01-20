@@ -128,7 +128,7 @@ export const getDashboard = async (req, res) => {
             // API wrapper puts this object in `data`.
 
             totalStudents,
-            pendingApprovals: pendingGatePasses + pendingEventRegistrations,
+            pendingApprovals: pendingGatePasses + pendingEvents,
             upcomingEvents,
             averageAttendance: 85, // Mock
             attendanceData: [

@@ -28,9 +28,10 @@ import {
 interface SidebarNavProps {
     collapsed?: boolean;
     onItemClick?: () => void;
+    onToggleCollapse?: () => void;
 }
 
-export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) => {
+export const SidebarNav = ({ collapsed = false, onItemClick, onToggleCollapse }: SidebarNavProps) => {
     const { user, logout } = useAuth();
     const location = useLocation();
     const [unreadCount, setUnreadCount] = useState(0);
@@ -246,7 +247,19 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
             </nav>
 
             {/* Footer / Logout */}
-            <div className="p-4 border-t border-border flex-shrink-0">
+            <div className="p-4 border-t border-border flex-shrink-0 space-y-2">
+                <button
+                    onClick={() => onToggleCollapse?.()}
+                    className={cn(
+                        "flex items-center gap-3 w-full px-3 py-2.5 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors",
+                        collapsed && "justify-center"
+                    )}
+                    title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                >
+                    {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                    {!collapsed && <span className="font-medium">Collapse</span>}
+                </button>
+
                 <button
                     onClick={() => {
                         logout();
@@ -276,15 +289,11 @@ const Sidebar = () => {
                 collapsed ? "w-20" : "w-64"
             )}
         >
-            <button
-                onClick={() => setCollapsed(!collapsed)}
-                className="absolute top-4 right-[-12px] z-50 p-1 bg-background border border-border rounded-full hover:bg-accent text-muted-foreground shadow-sm hidden lg:flex"
-            >
-                {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-            </button>
-
             <div className="flex-1 flex flex-col min-h-0">
-                <SidebarNav collapsed={collapsed} />
+                <SidebarNav
+                    collapsed={collapsed}
+                    onToggleCollapse={() => setCollapsed(!collapsed)}
+                />
             </div>
         </div>
     );
