@@ -1,48 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Label } from '../../components/ui/label';
 import { Switch } from '../../components/ui/switch';
-import { Bell, Lock, Moon, Sun, Monitor, HelpCircle, FileText } from 'lucide-react';
+import { Bell, Lock, HelpCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { studentAPI } from '../../services/api';
 import { useQuery } from '../../hooks/useQuery';
 import ChangePasswordModal from '../../components/auth/ChangePasswordModal';
-import { useTheme } from '../../context/ThemeContext';
 
 const StudentSettings = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     useAuth();
-    const { theme, setTheme } = useTheme();
     const [emailNotifs, setEmailNotifs] = useState(true);
     const [pushNotifs, setPushNotifs] = useState(true);
     const [saving, setSaving] = useState(false);
     const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-    const [tempTheme, setTempTheme] = useState(theme);
 
-    // Sync tempTheme if global theme changes externally (e.g. initial load)
-    useEffect(() => {
-        setTempTheme(theme);
-    }, [theme]);
 
-    const handleSaveTheme = async () => {
-        setSaving(true);
-        try {
-            setTheme(tempTheme); // Apply visually
-            await studentAPI.updateSettings({
-                emailNotifs,
-                pushNotifs,
-                theme: tempTheme
-            });
-            toast.success("Theme updated successfully");
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to save theme");
-        } finally {
-            setSaving(false);
-        }
-    };
+
 
     // Fetch Settings
     useQuery<any>(() => studentAPI.getSettings(), {
@@ -66,7 +43,6 @@ const StudentSettings = () => {
             await studentAPI.updateSettings({
                 emailNotifs,
                 pushNotifs,
-                theme // Current theme from context
             });
             toast.success("Settings saved successfully");
         } catch (error) {
@@ -117,47 +93,7 @@ const StudentSettings = () => {
                     </CardFooter>
                 </Card>
 
-                {/* Appearance */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Monitor className="h-5 w-5" />
-                            Appearance
-                        </CardTitle>
-                        <CardDescription>Customize the interface look</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-3 gap-2">
-                        <Button
-                            variant={tempTheme === 'light' ? 'default' : 'outline'}
-                            className="flex flex-col items-center justify-center h-20 gap-2"
-                            onClick={() => setTempTheme('light')}
-                        >
-                            <Sun className="h-6 w-6" />
-                            Light
-                        </Button>
-                        <Button
-                            variant={tempTheme === 'dark' ? 'default' : 'outline'}
-                            className="flex flex-col items-center justify-center h-20 gap-2"
-                            onClick={() => setTempTheme('dark')}
-                        >
-                            <Moon className="h-6 w-6" />
-                            Dark
-                        </Button>
-                        <Button
-                            variant={tempTheme === 'system' ? 'default' : 'outline'}
-                            className="flex flex-col items-center justify-center h-20 gap-2"
-                            onClick={() => setTempTheme('system')}
-                        >
-                            <Monitor className="h-6 w-6" />
-                            System
-                        </Button>
-                    </CardContent>
-                    <CardFooter>
-                        <Button onClick={handleSaveTheme} variant="outline" size="sm" disabled={saving}>
-                            {saving ? "Saving..." : "Save Appearance"}
-                        </Button>
-                    </CardFooter>
-                </Card>
+
 
                 {/* Security */}
                 <Card className="md:col-span-2">

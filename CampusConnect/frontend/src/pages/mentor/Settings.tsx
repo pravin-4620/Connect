@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '../../components/ui/button';
 import { Label } from '../../components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Lock, Moon, Sun, Monitor, HelpCircle, FileText } from 'lucide-react';
+import { Bell, Lock, HelpCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { mentorAPI } from '../../services/api';
@@ -14,7 +14,6 @@ const MentorSettings = () => {
     useAuth();
     const [emailNotifs, setEmailNotifs] = useState(true);
     const [pushNotifs, setPushNotifs] = useState(true);
-    const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
     const [changePasswordOpen, setChangePasswordOpen] = useState(false);
@@ -27,14 +26,7 @@ const MentorSettings = () => {
                     const s = data.data.settings;
                     setEmailNotifs(s.emailNotifications);
                     setPushNotifs(s.pushNotifications);
-                    setTheme(s.theme);
 
-                    // Apply theme
-                    if (s.theme === 'dark') {
-                        document.documentElement.classList.add('dark');
-                    } else if (s.theme === 'light') {
-                        document.documentElement.classList.remove('dark');
-                    }
                 }
             } catch (error) {
                 console.error("Failed to fetch settings", error);
@@ -51,18 +43,12 @@ const MentorSettings = () => {
             await mentorAPI.updateSettings({
                 settings: {
                     emailNotifications: emailNotifs,
-                    pushNotifications: pushNotifs,
-                    theme
+                    pushNotifications: pushNotifs
                 }
             });
             toast.success("Settings saved successfully");
 
-            // Apply theme logic (simplified)
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else if (theme === 'light') {
-                document.documentElement.classList.remove('dark');
-            }
+
         } catch (error) {
             console.error(error);
             toast.error("Failed to save settings");
@@ -112,41 +98,7 @@ const MentorSettings = () => {
                     </CardFooter>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Monitor className="h-5 w-5" />
-                            Appearance
-                        </CardTitle>
-                        <CardDescription>Customize the interface look</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-3 gap-2">
-                        <Button
-                            variant={theme === 'light' ? 'default' : 'outline'}
-                            className="flex flex-col items-center justify-center h-20 gap-2"
-                            onClick={() => setTheme('light')}
-                        >
-                            <Sun className="h-6 w-6" />
-                            Light
-                        </Button>
-                        <Button
-                            variant={theme === 'dark' ? 'default' : 'outline'}
-                            className="flex flex-col items-center justify-center h-20 gap-2"
-                            onClick={() => setTheme('dark')}
-                        >
-                            <Moon className="h-6 w-6" />
-                            Dark
-                        </Button>
-                        <Button
-                            variant={theme === 'system' ? 'default' : 'outline'}
-                            className="flex flex-col items-center justify-center h-20 gap-2"
-                            onClick={() => setTheme('system')}
-                        >
-                            <Monitor className="h-6 w-6" />
-                            System
-                        </Button>
-                    </CardContent>
-                </Card>
+
 
                 <Card className="md:col-span-2">
                     <CardHeader>
