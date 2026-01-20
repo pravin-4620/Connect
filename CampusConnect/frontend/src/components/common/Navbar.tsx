@@ -34,6 +34,7 @@ const Navbar = () => {
                 navigate('/placement/profile');
                 break;
             case 'ADMIN':
+            case 'SUB_ADMIN':
                 navigate('/admin/profile');
                 break;
             default:
@@ -117,10 +118,12 @@ const Navbar = () => {
                                 <User className="mr-2 h-4 w-4" />
                                 <span>Profile</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>Settings</span>
-                            </DropdownMenuItem>
+                            {user?.role !== 'SUB_ADMIN' && (
+                                <DropdownMenuItem onClick={handleSettingsClick} className="cursor-pointer">
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    <span>Settings</span>
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive cursor-pointer">
                                 <LogOut className="mr-2 h-4 w-4" />
