@@ -77,6 +77,7 @@ function App() {
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
               <Route path="/gmail-connected" element={
                 <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                   <GmailConnected />

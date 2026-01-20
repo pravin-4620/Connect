@@ -15,7 +15,7 @@ import {
 import { Eye, EyeOff, Lock, Mail, GraduationCap, AlertTriangle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { loginSchema } from '../../utils/validators';
 
 const formSchema = loginSchema.pick({ email: true, password: true });
@@ -208,11 +208,6 @@ const Login = () => {
                             </Button>
                         </form>
                     </CardContent>
-                    <CardFooter className="flex flex-col space-y-2">
-                        <div className="text-sm text-center text-muted-foreground">
-                            Admin access? <Link to="/admin/login" className="text-primary hover:underline font-medium">Login here</Link>
-                        </div>
-                    </CardFooter>
                 </Card>
 
                 <Dialog open={showMaintenance} onOpenChange={setShowMaintenance}>

@@ -22,6 +22,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     }
 
     if (!isAuthenticated) {
+        // If route is restricted to admins only, redirect to admin login
+        const isAdminRoute = allowedRoles?.every(role => ['ADMIN', 'SUB_ADMIN'].includes(role));
+        if (isAdminRoute) {
+            return <Navigate to="/admin/login" state={{ from: location }} replace />;
+        }
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
