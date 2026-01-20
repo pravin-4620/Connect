@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { adminAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -41,6 +42,7 @@ const AdminUsers = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { user: currentUser } = useAuth();
 
     // Server-side filters
     const [roleFilter, setRoleFilter] = useState('all');
@@ -333,12 +335,14 @@ const AdminUsers = () => {
                                                     <Button variant="ghost" size="icon" onClick={() => handleBlock(user)} title={user.isBlocked ? "Unblock" : "Block"}>
                                                         {user.isBlocked ? <Shield className="h-4 w-4 text-green-600" /> : <Ban className="h-4 w-4 text-red-600" />}
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(user)} disabled={currentUser?.role !== 'ADMIN' && (user.role === 'ADMIN' || user.role === 'SUB_ADMIN')}>
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(user.id)}>
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    {currentUser?.role === 'ADMIN' && (
+                                                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(user.id)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -390,8 +394,13 @@ const AdminUsers = () => {
                                     <SelectItem value="STUDENT">Student</SelectItem>
                                     <SelectItem value="MENTOR">Mentor</SelectItem>
                                     <SelectItem value="PLACEMENT_OFFICER">Placement Officer</SelectItem>
-                                    <SelectItem value="ADMIN">Admin</SelectItem>
-                                    <SelectItem value="SUB_ADMIN">Sub Admin</SelectItem>
+
+                                    {currentUser?.role === 'ADMIN' && (
+                                        <>
+                                            <SelectItem value="ADMIN">Admin</SelectItem>
+                                            <SelectItem value="SUB_ADMIN">Sub Admin</SelectItem>
+                                        </>
+                                    )}
                                     <SelectItem value="CHIEF_MENTOR">Chief Mentor</SelectItem>
                                 </SelectContent>
                             </Select>

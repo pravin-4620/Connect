@@ -334,28 +334,28 @@ function App() {
                 {/* Admin Routes */}
                 <Route path="/admin">
                   <Route path="dashboard" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'SUB_ADMIN']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <AdminDashboard />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="users" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'SUB_ADMIN']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <AdminUsers />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="mappings" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'SUB_ADMIN']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <AdminMappings />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="statistics" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'SUB_ADMIN']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <AdminStatistics />
                       </Suspense>
@@ -369,21 +369,21 @@ function App() {
                     </ProtectedRoute>
                   } />
                   <Route path="profile" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'SUB_ADMIN']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <AdminProfile />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="chats" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'SUB_ADMIN']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <AdminChats />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="announcements" element={
-                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <ProtectedRoute allowedRoles={['ADMIN', 'SUB_ADMIN']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <AdminAnnouncements />
                       </Suspense>
