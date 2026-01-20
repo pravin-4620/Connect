@@ -34,9 +34,9 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// All routes require authentication and MENTOR role
+// All routes require authentication and MENTOR or CHIEF_MENTOR role
 router.use(authenticate);
-router.use(requireRole('MENTOR'));
+router.use(requireRole(['MENTOR', 'CHIEF_MENTOR']));
 router.use(checkMaintenanceMode);
 
 // Dashboard
@@ -71,13 +71,13 @@ router.delete('/events/:eventId', deleteEvent);
 router.get('/approvals', getApprovals);
 router.put('/approvals/:approvalId', updateApproval);
 
-// Study Materials
-router.get('/study-materials', getStudyMaterials);
-router.post('/study-materials', upload.single('file'), uploadMaterial);
+// Study Materials (MENTOR only)
+router.get('/study-materials', requireRole('MENTOR'), getStudyMaterials);
+router.post('/study-materials', requireRole('MENTOR'), upload.single('file'), uploadMaterial);
 
-// Assignments
-router.get('/assignments', getAssignments);
-router.post('/assignments', createAssignment);
-router.put('/assignments/:submissionId/grade', gradeSubmission);
+// Assignments (MENTOR only)
+router.get('/assignments', requireRole('MENTOR'), getAssignments);
+router.post('/assignments', requireRole('MENTOR'), createAssignment);
+router.put('/assignments/:submissionId/grade', requireRole('MENTOR'), gradeSubmission);
 
 export default router;
