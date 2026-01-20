@@ -123,9 +123,9 @@ const Login = () => {
 
             <div className="w-full max-w-md space-y-8 relative z-10">
                 <div className="text-center space-y-2">
-                    <div className="inline-flex items-center justify-center p-3 bg-white rounded-2xl shadow-sm mb-4 ring-1 ring-gray-100">
-                        <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-                            <GraduationCap className="h-5 w-5 text-white" />
+                    <div className="flex justify-center mb-6">
+                        <div className="inline-flex items-center justify-center p-4 bg-gradient-to-tr from-primary to-violet-600 rounded-2xl shadow-lg transform hover:scale-105 transition-transform duration-300 ring-4 ring-white/10">
+                            <GraduationCap className="h-10 w-10 text-white" />
                         </div>
                     </div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">CampusConnect</h1>
