@@ -714,6 +714,9 @@ export const getPlacementOfficers = async (req, res) => {
 /**
  * Get system-wide statistics
  */
+/**
+ * Get system-wide statistics
+ */
 export const getStatistics = async (req, res) => {
     try {
         // Count users by role
@@ -785,6 +788,50 @@ export const getStatistics = async (req, res) => {
             where: { updatedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }
         });
 
+        // SYSTEM HEALTH CHECKS
+
+        // 1. Database Size
+        let dbSize = 'Unknown';
+        try {
+            const sizeResult = await prisma.$queryRaw`SELECT pg_size_pretty(pg_database_size(current_database())) as size`;
+            dbSize = sizeResult[0]?.size || 'Unknown';
+        } catch (e) {
+            console.error('DB Size query failed', e);
+        }
+
+        // 2. Frontend Status (Vercel)
+        let frontendStatus = 'Unknown';
+        let frontendLatency = 0;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+        if (!process.env.FRONTEND_URL) {
+            frontendStatus = 'Dev / Localhost';
+        } else {
+            try {
+                const start = Date.now();
+                // Simple ping. Note: client-side CORS might block if done from browser, but this is server-side.
+                // We use fetch (Node 18+)
+                const ping = await fetch(frontendUrl);
+                if (ping.ok || ping.status < 500) {
+                    frontendStatus = 'Operational';
+                    frontendLatency = Date.now() - start;
+                } else {
+                    frontendStatus = `Error ${ping.status}`;
+                }
+            } catch (e) {
+                frontendStatus = 'Unreachable';
+            }
+        }
+
+        // 3. Backend (Render/Local)
+        const backendStats = {
+            status: 'Operational',
+            uptime: Math.floor(process.uptime()), // Seconds
+            memoryUsage: Math.floor(process.memoryUsage().rss / 1024 / 1024), // MB
+            nodeVersion: process.version,
+            platform: process.platform
+        };
+
         return success(res, {
             users: {
                 totalStudents,
@@ -819,10 +866,27 @@ export const getStatistics = async (req, res) => {
             },
             technical: {
                 activeUsers24h,
-                serverUptime: process.uptime(),
-                nodeVersion: process.version,
-                platform: process.platform,
-                memoryUsage: process.memoryUsage()
+                serverUptime: backendStats.uptime,
+                nodeVersion: backendStats.nodeVersion,
+                platform: backendStats.platform,
+                memoryUsage: backendStats.memoryUsage // MB
+            },
+            systemHealth: {
+                database: {
+                    provider: 'PostgreSQL',
+                    size: dbSize,
+                    status: 'Connected'
+                },
+                backend: {
+                    provider: 'Render (Node.js)',
+                    ...backendStats
+                },
+                frontend: {
+                    provider: 'Vercel (React)',
+                    url: frontendUrl,
+                    status: frontendStatus,
+                    latency: frontendLatency
+                }
             },
             recentUsers
         }, 'Statistics fetched');

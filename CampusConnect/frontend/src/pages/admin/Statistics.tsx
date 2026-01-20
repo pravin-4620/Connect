@@ -23,9 +23,13 @@ const AdminStatistics = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await adminAPI.getDashboard(); // We can use the same endpoint or a dedicated one if created
+                const res = await adminAPI.getDashboard();
                 if (res.data?.success) {
-                    setStats(res.data.data.technical);
+                    // Combine technical stats and systemHealth into one object for easier access
+                    setStats({
+                        ...res.data.data.technical,
+                        systemHealth: res.data.data.systemHealth
+                    });
                 }
             } catch (error) {
                 console.error("Failed to fetch system stats", error);
@@ -64,7 +68,7 @@ const AdminStatistics = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">System Statistics</h1>
-                <p className="text-muted-foreground">Technical performance and server health monitoring</p>
+                <p className="text-muted-foreground">Technical performance and infrastructure health monitoring</p>
             </div>
 
             {/* Top Cards */}
@@ -97,7 +101,7 @@ const AdminStatistics = () => {
                         <HardDrive className="h-4 w-4 text-purple-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats?.memoryUsage?.rss ? (stats.memoryUsage.rss / 1024 / 1024).toFixed(0) : 0} MB</div>
+                        <div className="text-2xl font-bold">{stats?.memoryUsage || 0} MB</div>
                         <p className="text-xs text-muted-foreground">RSS Memory Consumption</p>
                     </CardContent>
                 </Card>
@@ -114,12 +118,103 @@ const AdminStatistics = () => {
                 </Card>
             </div>
 
+            {/* Infrastructure Status */}
+            <div>
+                <h2 className="text-xl font-semibold mb-4 tracking-tight">Infrastructure Health</h2>
+                <div className="grid gap-6 md:grid-cols-3">
+                    {/* Database */}
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                <HardDrive className="h-4 w-4 text-indigo-500" /> Database (Neon/Postgres)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3 pt-2">
+                            <div className="flex justify-between items-center border-b pb-2">
+                                <span className="text-sm text-muted-foreground">Status</span>
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 flex items-center gap-1">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                    {stats?.systemHealth?.database?.status || 'Connected'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center border-b pb-2">
+                                <span className="text-sm text-muted-foreground">Size</span>
+                                <span className="font-mono text-sm">{stats?.systemHealth?.database?.size || 'Unknown'}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">Provider</span>
+                                <span className="text-sm font-medium">PostgreSQL</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Backend */}
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                <Server className="h-4 w-4 text-blue-500" /> Backend (Render)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3 pt-2">
+                            <div className="flex justify-between items-center border-b pb-2">
+                                <span className="text-sm text-muted-foreground">Status</span>
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 flex items-center gap-1">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                    Operational
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center border-b pb-2">
+                                <span className="text-sm text-muted-foreground">Uptime</span>
+                                <span className="font-mono text-sm">{stats?.serverUptime ? (stats.serverUptime / 3600).toFixed(2) : 0}h</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">Provider</span>
+                                <span className="text-sm font-medium">Render.com</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Frontend */}
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                <Globe className="h-4 w-4 text-purple-500" /> Frontend (Vercel)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3 pt-2">
+                            <div className="flex justify-between items-center border-b pb-2">
+                                <span className="text-sm text-muted-foreground">Status</span>
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${stats?.systemHealth?.frontend?.status === 'Operational'
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-yellow-100 text-yellow-700'
+                                    }`}>
+                                    {stats?.systemHealth?.frontend?.status === 'Operational' &&
+                                        <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                    }
+                                    {stats?.systemHealth?.frontend?.status || 'Unknown'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center border-b pb-2">
+                                <span className="text-sm text-muted-foreground">Latency</span>
+                                <span className="font-mono text-sm">{stats?.systemHealth?.frontend?.latency || 0}ms</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">URL</span>
+                                <a href={stats?.systemHealth?.frontend?.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline truncate max-w-[120px]">
+                                    {stats?.systemHealth?.frontend?.url || 'N/A'}
+                                </a>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
             {/* Detailed System Info */}
             <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Cpu className="h-5 w-5" /> Resource Usage Trend (Mock)</CardTitle>
-                        <CardDescription>Memory usage pattern over last 24h</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><Cpu className="h-5 w-5" /> Resource Usage Trend</CardTitle>
+                        <CardDescription>Simulated memory usage pattern over last 24h</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="h-[300px] w-full">
@@ -144,8 +239,8 @@ const AdminStatistics = () => {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5" /> Traffic Overview (Mock)</CardTitle>
-                        <CardDescription>Weekly visitor distribution</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5" /> Traffic Overview</CardTitle>
+                        <CardDescription>Simulated weekly visitor distribution</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="h-[300px] w-full">
@@ -158,68 +253,6 @@ const AdminStatistics = () => {
                                     <Line type="monotone" dataKey="value" stroke="#82ca9d" strokeWidth={2} />
                                 </LineChart>
                             </ResponsiveContainer>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-sm font-medium">Environment</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex justify-between border-b pb-2">
-                            <span className="text-muted-foreground">Node ENV</span>
-                            <span className="font-mono bg-muted px-2 rounded">production</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-2">
-                            <span className="text-muted-foreground">Arch</span>
-                            <span className="font-mono bg-muted px-2 rounded">x64</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-2">
-                            <span className="text-muted-foreground">PID</span>
-                            <span className="font-mono bg-muted px-2 rounded">{Math.floor(Math.random() * 10000)}</span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-sm font-medium">Database Status</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex justify-between border-b pb-2">
-                            <span className="text-muted-foreground">Connection</span>
-                            <span className="text-green-500 font-bold flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-green-500"></div> Connected</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-2">
-                            <span className="text-muted-foreground">Pool Size</span>
-                            <span className="font-mono bg-muted px-2 rounded">10</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-2">
-                            <span className="text-muted-foreground">Latency</span>
-                            <span className="font-mono bg-muted px-2 rounded">~45ms</span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-sm font-medium">Cache Status</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex justify-between border-b pb-2">
-                            <span className="text-muted-foreground">Status</span>
-                            <span className="text-green-500 font-bold flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-green-500"></div> Active</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-2">
-                            <span className="text-muted-foreground">Hit Rate</span>
-                            <span className="font-mono bg-muted px-2 rounded">94%</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-2">
-                            <span className="text-muted-foreground">Keys</span>
-                            <span className="font-mono bg-muted px-2 rounded">1,240</span>
                         </div>
                     </CardContent>
                 </Card>
