@@ -146,6 +146,14 @@ const AdminStatistics = () => {
                                 <span className="text-sm text-muted-foreground">Size</span>
                                 <span className="font-mono text-sm">{stats?.systemHealth?.database?.size || 'Unknown'}</span>
                             </div>
+                            <div className="flex justify-between items-center border-b pb-2">
+                                <span className="text-sm text-muted-foreground">Version</span>
+                                <span className="text-sm">{stats?.systemHealth?.database?.version || 'PostgreSQL'}</span>
+                            </div>
+                            <div className="flex justify-between items-center border-b pb-2">
+                                <span className="text-sm text-muted-foreground">Connections</span>
+                                <span className="font-mono text-sm">{stats?.systemHealth?.database?.connections || 0}</span>
+                            </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-muted-foreground">Provider</span>
                                 <span className="text-sm font-medium">PostgreSQL</span>
@@ -171,6 +179,10 @@ const AdminStatistics = () => {
                             <div className="flex justify-between items-center border-b pb-2">
                                 <span className="text-sm text-muted-foreground">Uptime</span>
                                 <span className="font-mono text-sm">{stats?.serverUptime ? (stats.serverUptime / 3600).toFixed(2) : 0}h</span>
+                            </div>
+                            <div className="flex justify-between items-center border-b pb-2">
+                                <span className="text-sm text-muted-foreground">Region</span>
+                                <span className="text-sm">{stats?.systemHealth?.backend?.region || 'Unknown'}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-muted-foreground">Provider</span>

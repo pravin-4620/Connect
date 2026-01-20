@@ -790,13 +790,26 @@ export const getStatistics = async (req, res) => {
 
         // SYSTEM HEALTH CHECKS
 
-        // 1. Database Size
+        // 1. Database Stats (Size, Version, Connections)
         let dbSize = 'Unknown';
+        let dbVersion = 'PostgreSQL';
+        let dbConnections = 0;
         try {
             const sizeResult = await prisma.$queryRaw`SELECT pg_size_pretty(pg_database_size(current_database())) as size`;
             dbSize = sizeResult[0]?.size || 'Unknown';
+
+            try {
+                const verResult = await prisma.$queryRaw`SELECT version()`;
+                // Extract "PostgreSQL 15.x"
+                dbVersion = verResult[0]?.version?.split(',')[0] || 'PostgreSQL';
+
+                const connResult = await prisma.$queryRaw`SELECT count(*)::int as count FROM pg_stat_activity`;
+                dbConnections = connResult[0]?.count || 0;
+            } catch (e2) {
+                console.warn('DB Extended stats failed (permissions?)', e2);
+            }
         } catch (e) {
-            console.error('DB Size query failed', e);
+            console.error('DB Stats query failed', e);
         }
 
         // 2. Frontend Status (Vercel)
@@ -829,7 +842,8 @@ export const getStatistics = async (req, res) => {
             uptime: Math.floor(process.uptime()), // Seconds
             memoryUsage: Math.floor(process.memoryUsage().rss / 1024 / 1024), // MB
             nodeVersion: process.version,
-            platform: process.platform
+            platform: process.platform,
+            region: process.env.RENDER_REGION || 'Oregon (US West)' // Default Render region
         };
 
         return success(res, {
@@ -875,10 +889,13 @@ export const getStatistics = async (req, res) => {
                 database: {
                     provider: 'PostgreSQL',
                     size: dbSize,
+                    version: dbVersion,
+                    connections: dbConnections,
                     status: 'Connected'
                 },
                 backend: {
                     provider: 'Render (Node.js)',
+                    region: backendStats.region,
                     ...backendStats
                 },
                 frontend: {

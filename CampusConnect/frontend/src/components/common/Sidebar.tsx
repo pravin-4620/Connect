@@ -145,6 +145,15 @@ export const SidebarNav = ({ collapsed = false, onItemClick, onToggleCollapse }:
                     { icon: MessageSquare, label: 'Chat Logs', path: '/admin/chats' },
                     { icon: Settings, label: 'Settings', path: '/admin/settings' },
                 ];
+            case 'SUB_ADMIN':
+                return [
+                    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+                    { icon: Users, label: 'User Management', path: '/admin/users' },
+                    { icon: UserCheck, label: 'Mappings', path: '/admin/mappings' },
+                    { icon: BarChart, label: 'System Stats', path: '/admin/statistics' },
+                    { icon: Megaphone, label: 'Announcements', path: '/admin/announcements' },
+                    { icon: MessageSquare, label: 'Chat Logs', path: '/admin/chats' },
+                ];
             default:
                 return [];
         }
