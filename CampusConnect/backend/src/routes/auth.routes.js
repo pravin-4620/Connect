@@ -11,12 +11,13 @@ import {
     checkMaintenanceStatus
 } from '../controllers/auth.controller.js';
 import { authenticate } from '../middleware/auth.js';
+import { checkMaintenanceMode } from '../middleware/maintenance.js';
 
 const router = express.Router();
 
 // Public routes
 router.get('/maintenance-status', checkMaintenanceStatus);
-router.post('/login', login);
+router.post('/login', checkMaintenanceMode, login);
 router.post('/admin-login', adminLogin);
 router.get('/gmail-callback', gmailCallback);
 

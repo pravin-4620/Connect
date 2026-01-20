@@ -17,7 +17,7 @@ export const checkMaintenanceMode = async (req, res, next) => {
 
         // Check settings
         const setting = await prisma.systemSettings.findUnique({
-            where: { key: 'maintenanceMode' }
+            where: { key: 'maintenance_mode' }
         });
 
         if (setting && (setting.value === 'true' || setting.jsonValue === true)) {

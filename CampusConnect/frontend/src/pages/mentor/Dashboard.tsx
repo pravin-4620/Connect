@@ -29,30 +29,12 @@ const MentorDashboard = () => {
         onSuccess: (data) => {
             setStats(data || null);
         },
-        onError: () => {
-            toast.error("Failed to load dashboard data (using mock)");
-            setStats({
-                totalStudents: 42,
-                pendingApprovals: 5,
-                upcomingEvents: 3,
-                averageAttendance: 85,
-                attendanceData: [
-                    { name: 'Mon', present: 38 },
-                    { name: 'Tue', present: 40 },
-                    { name: 'Wed', present: 35 },
-                    { name: 'Thu', present: 41 },
-                    { name: 'Fri', present: 39 },
-                ],
-                placementStats: [
-                    { name: 'Placed', value: 12 },
-                    { name: 'Unplaced', value: 30 },
-                ],
-                activity: [
-                    { id: 1, type: 'GATE_PASS', message: 'Gate pass requested by John Doe', time: '2 mins ago' },
-                    { id: 2, type: 'ASSIGNMENT', message: 'Assignment submitted by Alice Smith', time: '1 hour ago' },
-                    { id: 3, type: 'EVENT', message: 'Workshop "React Basics" scheduled', time: '5 hours ago' }
-                ]
-            });
+        onError: (err: any) => {
+            console.error('Dashboard error:', err);
+            // If maintenance mode (503), it will be handled by global interceptors or Layout
+            if (err?.response?.status !== 503) {
+                toast.error("Failed to load dashboard data");
+            }
         }
     });
 

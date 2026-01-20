@@ -54,6 +54,17 @@ api.interceptors.response.use(
                 case 500:
                     toast.error('Server Error', { description: 'Please try again later' });
                     break;
+                case 503:
+                    // Maintenance Mode - Force Logout
+                    toast.error('System Maintenance', { description: 'The system is currently under maintenance.' });
+                    if (!window.location.pathname.includes('/login')) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 1500); // Small delay to read toast
+                    }
+                    break;
                 default:
                     // For validation errors (400) or others, we might want to show them
                     if (error.response.status !== 400) { // Let components handle 400 validations usually
@@ -174,7 +185,7 @@ export const adminAPI = {
     createMapping: (data: any) => api.post('/admin/mappings', data),
     bulkAssignMentors: (assignments: { studentId: string, mentorId: string }[]) => api.post('/admin/mappings/bulk-mentors', { assignments }),
     getSettings: () => api.get('/admin/settings'),
-    updateSettings: (data: any) => api.put('/admin/settings', { settings: data }),
+    updateSettings: (data: any) => api.put('/admin/settings', data),
     getAnnouncements: (params?: any) => api.get('/admin/announcements', { params }),
     createAnnouncement: (data: any) => api.post('/admin/announcements', data),
     deleteAnnouncement: (id: string) => api.delete(`/admin/announcements/${id}`),
