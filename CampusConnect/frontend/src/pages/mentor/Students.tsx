@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Search, Filter, Eye, Mail, MoreHorizontal, FileText } from 'lucide-react';
+import { Search, Filter, Eye, Mail, MoreHorizontal } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -15,15 +15,7 @@ import {
     TableHeader,
     TableRow,
 } from '../../components/ui/table';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '../../components/ui/dialog';
-import { Label } from '../../components/ui/label';
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -35,25 +27,11 @@ import { useNavigate } from 'react-router-dom';
 import type { Student } from '../../types';
 import { useQuery } from '../../hooks/useQuery';
 import { toast } from 'sonner';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '../../components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+
 
 const MentorStudents = () => {
     const [students, setStudents] = useState<Student[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-    const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
-    const [newAttendance, setNewAttendance] = useState(0); // Percentage
-    const [dailyStatus, setDailyStatus] = useState('PRESENT');
-    const [attendanceMode, setAttendanceMode] = useState<'daily' | 'percentage'>('daily');
-    const [updating, setUpdating] = useState(false);
-
     const navigate = useNavigate();
 
     const { loading } = useQuery<any>(() => mentorAPI.getStudents(), {
@@ -67,29 +45,6 @@ const MentorStudents = () => {
             setStudents([]);
         }
     });
-
-    const handleUpdateAttendance = async () => {
-        if (!selectedStudent) return;
-        setUpdating(true);
-        try {
-            if (attendanceMode === 'percentage') {
-                await mentorAPI.updateAttendance(selectedStudent.id, newAttendance);
-                toast.success("Attendance percentage updated");
-                setStudents(prev => prev.map(s =>
-                    s.id === selectedStudent.id ? { ...s, attendance: newAttendance } : s
-                ));
-            } else {
-                await mentorAPI.markDailyAttendance(selectedStudent.id, dailyStatus);
-                toast.success(`Marked as ${dailyStatus}`);
-            }
-            setIsAttendanceOpen(false);
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to update attendance");
-        } finally {
-            setUpdating(false);
-        }
-    };
 
     const filteredStudents = useMemo(() => {
         if (!searchQuery) return students;
@@ -206,62 +161,6 @@ const MentorStudents = () => {
                 </CardContent>
             </Card>
 
-            <Dialog open={isAttendanceOpen} onOpenChange={setIsAttendanceOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Attendance Management</DialogTitle>
-                        <DialogDescription>
-                            Mark attendance for {selectedStudent?.user?.firstName}.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <Tabs value={attendanceMode} onValueChange={(v: any) => setAttendanceMode(v)} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="daily">Daily Record</TabsTrigger>
-                            <TabsTrigger value="percentage">Update Percentage</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="daily" className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label>Status for Today ({new Date().toLocaleDateString()})</Label>
-                                <Select value={dailyStatus} onValueChange={setDailyStatus}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="PRESENT">Present</SelectItem>
-                                        <SelectItem value="ABSENT">Absent</SelectItem>
-                                        <SelectItem value="ON_DUTY">On Duty</SelectItem>
-                                        <SelectItem value="LEAVE">Leave</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </TabsContent>
-
-                        <TabsContent value="percentage" className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="attendance">Overall Percentage (%)</Label>
-                                <Input
-                                    id="attendance"
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    value={newAttendance}
-                                    onChange={(e) => setNewAttendance(Number(e.target.value))}
-                                />
-                                <p className="text-xs text-muted-foreground">Adjusting this manually overrides calculated values.</p>
-                            </div>
-                        </TabsContent>
-                    </Tabs>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsAttendanceOpen(false)}>Cancel</Button>
-                        <Button onClick={handleUpdateAttendance} disabled={updating}>
-                            {updating ? <LoadingSpinner fullScreen={false} className="mr-2 h-4 w-4" /> : null} Save
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 };
