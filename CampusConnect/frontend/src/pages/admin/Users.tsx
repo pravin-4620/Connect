@@ -130,7 +130,6 @@ const AdminUsers = () => {
             setValue('specialization', user.mentor.specialization);
             setValue('experienceYears', user.mentor.experienceYears);
         } else if (user.role === 'PLACEMENT_OFFICER' && user.placementOfficer) {
-            setValue('department', user.placementOfficer.department);
             setValue('designation', user.placementOfficer.designation);
         }
 
@@ -470,22 +469,6 @@ const AdminUsers = () => {
 
                         {createRole === 'PLACEMENT_OFFICER' && (
                             <div className="space-y-4 border-t pt-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="department">Department</Label>
-                                    <Select
-                                        onValueChange={(val) => setValue('department', val)}
-                                        defaultValue={selectedUser?.placementOfficer?.department}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select Department" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {departments.map((dept) => (
-                                                <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="designation">Designation</Label>
                                     <Input id="designation" {...register('designation')} />
