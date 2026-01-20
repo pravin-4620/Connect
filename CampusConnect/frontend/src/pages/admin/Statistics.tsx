@@ -101,7 +101,12 @@ const AdminStatistics = () => {
                         <HardDrive className="h-4 w-4 text-purple-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats?.memoryUsage || 0} MB</div>
+                        <div className="text-2xl font-bold">
+                            {typeof stats?.memoryUsage === 'object'
+                                ? Math.floor((stats.memoryUsage.rss || 0) / 1024 / 1024)
+                                : (stats?.memoryUsage || 0)
+                            } MB
+                        </div>
                         <p className="text-xs text-muted-foreground">RSS Memory Consumption</p>
                     </CardContent>
                 </Card>
@@ -185,8 +190,8 @@ const AdminStatistics = () => {
                             <div className="flex justify-between items-center border-b pb-2">
                                 <span className="text-sm text-muted-foreground">Status</span>
                                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${stats?.systemHealth?.frontend?.status === 'Operational'
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-yellow-100 text-yellow-700'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-yellow-100 text-yellow-700'
                                     }`}>
                                     {stats?.systemHealth?.frontend?.status === 'Operational' &&
                                         <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
