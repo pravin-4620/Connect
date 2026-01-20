@@ -258,72 +258,72 @@ function App() {
                 {/* Placement Officer Routes */}
                 <Route path="/placement">
                   <Route path="dashboard" element={
-                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}>
+                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <PlacementDashboard />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="drives" element={
-                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}>
+                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <PlacementDrives />
                       </Suspense>
                     </ProtectedRoute>
                   } />
-                  <Route path="companies" element={<ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}><Placeholder title="Companies" /></ProtectedRoute>} />
+                  <Route path="companies" element={<ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}><Placeholder title="Companies" /></ProtectedRoute>} />
                   <Route path="students" element={
-                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}>
+                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <PlacementStudents />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="interviews" element={
-                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}>
+                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <PlacementInterviews />
                       </Suspense>
                     </ProtectedRoute>
                   } />
-                  <Route path="skills-tests" element={<ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}><Placeholder title=" Skills Tests" /></ProtectedRoute>} />
+                  <Route path="skills-tests" element={<ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}><Placeholder title=" Skills Tests" /></ProtectedRoute>} />
                   <Route path="analytics" element={
-                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}>
+                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <PlacementAnalytics />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="announcements" element={
-                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}>
+                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <PlacementAnnouncements />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="mails" element={
-                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}>
+                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <PlacementMails />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="settings" element={
-                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}>
+                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <PlacementSettings />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="profile" element={
-                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}>
+                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <PlacementProfile />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="skills-tests" element={
-                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER']}>
+                    <ProtectedRoute allowedRoles={['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <SkillsTests />
                       </Suspense>

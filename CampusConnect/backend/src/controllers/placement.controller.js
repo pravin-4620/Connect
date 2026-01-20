@@ -26,33 +26,45 @@ export const getDashboard = async (req, res) => {
         }
 
         // Get active placement drives
+        const isHead = req.userRole === 'PLACEMENT_HEAD';
+
+        // Get active placement drives
+        const driveWhere = {
+            applicationDeadline: { gte: new Date() }
+        };
+        if (!isHead) driveWhere.placementOfficerId = placementOfficer.id;
+
         const activeDrives = await prisma.placement.count({
-            where: {
-                placementOfficerId: placementOfficer.id,
-                applicationDeadline: { gte: new Date() }
-            }
+            where: driveWhere
         });
 
         // Get total placements (approved applications)
+        const placementWhere = {
+            status: 'APPROVED'
+        };
+        if (!isHead) placementWhere.placement = { placementOfficerId: placementOfficer.id };
+
         const totalPlacements = await prisma.placementApplication.count({
-            where: {
-                placement: { placementOfficerId: placementOfficer.id },
-                status: 'APPROVED'
-            }
+            where: placementWhere
         });
 
         // Get upcoming interviews
+        const interviewWhere = {
+            scheduledAt: { gte: new Date() },
+            status: 'SCHEDULED'
+        };
+        if (!isHead) interviewWhere.placementOfficerId = placementOfficer.id;
+
         const upcomingInterviews = await prisma.interview.count({
-            where: {
-                placementOfficerId: placementOfficer.id,
-                scheduledAt: { gte: new Date() },
-                status: 'SCHEDULED'
-            }
+            where: interviewWhere
         });
 
         // Get average package
+        const packageWhere = {};
+        if (!isHead) packageWhere.placementOfficerId = placementOfficer.id;
+
         const placements = await prisma.placement.findMany({
-            where: { placementOfficerId: placementOfficer.id }
+            where: packageWhere
         });
 
         const avgPackage = placements.length > 0
@@ -187,8 +199,13 @@ export const getPlacementDrives = async (req, res) => {
             where: { userId }
         });
 
+        const where = {};
+        if (req.userRole !== 'PLACEMENT_HEAD') {
+            where.placementOfficerId = placementOfficer.id;
+        }
+
         const placements = await prisma.placement.findMany({
-            where: { placementOfficerId: placementOfficer.id },
+            where,
             include: {
                 applications: {
                     include: {
@@ -400,7 +417,10 @@ export const getInterviews = async (req, res) => {
             where: { userId }
         });
 
-        const where = { placementOfficerId: placementOfficer.id };
+        const where = {};
+        if (req.userRole !== 'PLACEMENT_HEAD') {
+            where.placementOfficerId = placementOfficer.id;
+        }
 
         if (status) {
             where.status = status;
@@ -506,7 +526,10 @@ export const getAnalytics = async (req, res) => {
         });
 
         // Build where clause for placements
-        const placementWhere = { placementOfficerId: placementOfficer.id };
+        const placementWhere = {};
+        if (req.userRole !== 'PLACEMENT_HEAD') {
+            placementWhere.placementOfficerId = placementOfficer.id;
+        }
 
         if (startDate && endDate) {
             placementWhere.driveDate = {
@@ -739,7 +762,7 @@ export const updateApplicationStatus = async (req, res) => {
 export const getEmails = async (req, res) => {
     try {
         const userId = req.userId;
-        
+
         const emails = await prisma.email.findMany({
             where: { userId },
             orderBy: { receivedAt: 'desc' }

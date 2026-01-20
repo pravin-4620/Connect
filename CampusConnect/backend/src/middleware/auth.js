@@ -102,7 +102,7 @@ export const checkYearRestriction = async (req, res, next) => {
                 where: { id: receiverId }
             });
 
-            if (receiver?.role === 'PLACEMENT_OFFICER' && student.year < 3) {
+            if ((receiver?.role === 'PLACEMENT_OFFICER' || receiver?.role === 'PLACEMENT_HEAD') && student.year < 3) {
                 return res.status(403).json({
                     message: 'Students in year 1-2 cannot communicate with placement officers',
                     currentYear: student.year,

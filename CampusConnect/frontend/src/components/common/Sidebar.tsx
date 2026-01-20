@@ -124,6 +124,7 @@ export const SidebarNav = ({ collapsed = false, onItemClick, onToggleCollapse }:
                     { icon: Settings, label: 'Settings', path: '/mentor/settings' },
                 ];
             case 'PLACEMENT_OFFICER':
+            case 'PLACEMENT_HEAD':
                 return [
                     { icon: LayoutDashboard, label: 'Dashboard', path: '/placement/dashboard' },
                     { icon: Briefcase, label: 'Drives', path: '/placement/drives' },

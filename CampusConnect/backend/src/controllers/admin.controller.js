@@ -50,8 +50,8 @@ export const createUser = async (req, res) => {
             return error(res, 'Email, first name, last name, and role are required', 400);
         }
 
-        if (!['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER', 'SUB_ADMIN', 'CHIEF_MENTOR'].includes(role)) {
-            return error(res, 'Invalid role. Available: STUDENT, MENTOR, PLACEMENT_OFFICER, SUB_ADMIN, CHIEF_MENTOR', 400);
+        if (!['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER', 'SUB_ADMIN', 'CHIEF_MENTOR', 'PLACEMENT_HEAD'].includes(role)) {
+            return error(res, 'Invalid role. Available: STUDENT, MENTOR, PLACEMENT_OFFICER, SUB_ADMIN, CHIEF_MENTOR, PLACEMENT_HEAD', 400);
         }
 
         // Check if user already exists
@@ -118,7 +118,7 @@ export const createUser = async (req, res) => {
                         experienceYears: experienceYears ? parseInt(experienceYears) : null
                     }
                 });
-            } else if (role === 'PLACEMENT_OFFICER') {
+            } else if (role === 'PLACEMENT_OFFICER' || role === 'PLACEMENT_HEAD') {
                 await prisma.placementOfficer.create({
                     data: {
                         userId: user.id,

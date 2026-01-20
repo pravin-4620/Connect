@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export type Role = 'STUDENT' | 'MENTOR' | 'PLACEMENT_OFFICER' | 'ADMIN' | 'CHIEF_MENTOR' | 'SUB_ADMIN';
+export type Role = 'STUDENT' | 'MENTOR' | 'PLACEMENT_OFFICER' | 'ADMIN' | 'CHIEF_MENTOR' | 'SUB_ADMIN' | 'PLACEMENT_HEAD';
 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'MENTOR_APPROVED';
 

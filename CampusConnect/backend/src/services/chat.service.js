@@ -401,6 +401,22 @@ export const getChatPartners = async (userId) => {
                 }
             });
             partners = students.map(s => s.user);
+        } else if (user.role === 'PLACEMENT_HEAD') {
+            // Head Placement Officer: Chief Mentor, Placement Officers, Admins
+            const users = await prisma.user.findMany({
+                where: {
+                    role: { in: ['CHIEF_MENTOR', 'PLACEMENT_OFFICER', 'ADMIN', 'PLACEMENT_HEAD', 'SUB_ADMIN'] },
+                    id: { not: userId }
+                },
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    profilePicture: true,
+                    role: true
+                }
+            });
+            partners = users;
         } else if (user.role === 'ADMIN') {
             // Admin can chat with everyone
             const allUsers = await prisma.user.findMany({

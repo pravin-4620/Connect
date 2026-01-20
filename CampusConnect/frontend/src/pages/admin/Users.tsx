@@ -129,7 +129,7 @@ const AdminUsers = () => {
             setValue('department', user.mentor.department);
             setValue('specialization', user.mentor.specialization);
             setValue('experienceYears', user.mentor.experienceYears);
-        } else if (user.role === 'PLACEMENT_OFFICER' && user.placementOfficer) {
+        } else if ((user.role === 'PLACEMENT_OFFICER' || user.role === 'PLACEMENT_HEAD') && user.placementOfficer) {
             setValue('designation', user.placementOfficer.designation);
         }
 
@@ -216,6 +216,7 @@ const AdminUsers = () => {
             case 'CHIEF_MENTOR': return <Badge variant="default" className="bg-indigo-600 hover:bg-indigo-700">Chief Mentor</Badge>;
             case 'MENTOR': return <Badge variant="default" className="bg-purple-600 hover:bg-purple-700">Mentor</Badge>;
             case 'PLACEMENT_OFFICER': return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Placement</Badge>;
+            case 'PLACEMENT_HEAD': return <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">Head PO</Badge>;
             case 'STUDENT': return <Badge variant="outline">Student</Badge>;
             default: return <Badge variant="outline">{role.replace('_', ' ')}</Badge>;
         }
@@ -393,6 +394,7 @@ const AdminUsers = () => {
                                     <SelectItem value="STUDENT">Student</SelectItem>
                                     <SelectItem value="MENTOR">Mentor</SelectItem>
                                     <SelectItem value="PLACEMENT_OFFICER">Placement Officer</SelectItem>
+                                    <SelectItem value="PLACEMENT_HEAD">Head Placement Officer</SelectItem>
 
                                     {currentUser?.role === 'ADMIN' && (
                                         <>
@@ -467,7 +469,7 @@ const AdminUsers = () => {
                             </div>
                         )}
 
-                        {createRole === 'PLACEMENT_OFFICER' && (
+                        {(createRole === 'PLACEMENT_OFFICER' || createRole === 'PLACEMENT_HEAD') && (
                             <div className="space-y-4 border-t pt-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="designation">Designation</Label>

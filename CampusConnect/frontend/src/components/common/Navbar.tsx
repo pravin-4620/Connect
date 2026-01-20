@@ -31,6 +31,7 @@ const Navbar = () => {
                 navigate('/mentor/profile');
                 break;
             case 'PLACEMENT_OFFICER':
+            case 'PLACEMENT_HEAD':
                 navigate('/placement/profile');
                 break;
             case 'ADMIN':
@@ -52,6 +53,7 @@ const Navbar = () => {
                 navigate('/mentor/settings');
                 break;
             case 'PLACEMENT_OFFICER':
+            case 'PLACEMENT_HEAD':
                 navigate('/placement/settings');
                 break;
             case 'ADMIN':
