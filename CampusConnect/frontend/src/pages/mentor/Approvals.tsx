@@ -20,7 +20,10 @@ import { CheckCircle, Calendar, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { useQuery } from '../../hooks/useQuery';
 
+import { useAuth } from '../../context/AuthContext';
+
 const MentorApprovals = () => {
+    const { user } = useAuth();
     const [requests, setRequests] = useState<any[]>([]);
     const [selectedRequest, setSelectedRequest] = useState<any>(null);
     const [rejectReason, setRejectReason] = useState('');
@@ -53,8 +56,6 @@ const MentorApprovals = () => {
         },
         onError: () => {
             toast.error("Failed to fetch approvals");
-            // Mock data mapped similarly
-            // ...
         }
     });
 
@@ -69,17 +70,20 @@ const MentorApprovals = () => {
         if (!selectedRequest || !actionType) return;
 
         try {
-            await mentorAPI.updateApproval(selectedRequest.id, {
+            const res = await mentorAPI.updateApproval(selectedRequest.id, {
                 type: selectedRequest.type, // 'gatepass' or 'event'
                 status: actionType === 'APPROVE' ? 'APPROVED' : 'REJECTED',
                 note: rejectReason
             });
             toast.success(`Request ${actionType === 'APPROVE' ? 'approved' : 'rejected'}`);
 
+            const updatedStatus = res.data?.data?.gatePass?.status || res.data?.gatePass?.status ||
+                res.data?.data?.event?.status || 'APPROVED';
+
             // Update local state
             setRequests(prev => prev.map(req =>
                 req.id === selectedRequest.id
-                    ? { ...req, status: actionType === 'APPROVE' ? 'APPROVED' : 'REJECTED', approvalNote: rejectReason }
+                    ? { ...req, status: actionType === 'REJECT' ? 'REJECTED' : updatedStatus, approvalNote: rejectReason }
                     : req
             ));
             setIsDialogOpen(false);
@@ -89,8 +93,17 @@ const MentorApprovals = () => {
         }
     };
 
-    const pendingRequests = requests.filter(r => r.status === 'PENDING');
-    const historyRequests = requests.filter(r => r.status !== 'PENDING');
+    const pendingRequests = requests.filter(r => {
+        if (r.status === 'PENDING') return user?.role === 'MENTOR';
+        if (r.status === 'MENTOR_APPROVED') return user?.role === 'CHIEF_MENTOR';
+        return false;
+    });
+
+    const historyRequests = requests.filter(r =>
+        r.status === 'APPROVED' ||
+        r.status === 'REJECTED' ||
+        (user?.role === 'MENTOR' && r.status === 'MENTOR_APPROVED') // Mentors see their approved (but pending chief) requests in history
+    );
 
     if (loading) return <LoadingSpinner fullScreen={false} />;
 

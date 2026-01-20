@@ -176,49 +176,49 @@ function App() {
                 {/* Mentor Routes */}
                 <Route path="/mentor">
                   <Route path="dashboard" element={
-                    <ProtectedRoute allowedRoles={['MENTOR']}>
+                    <ProtectedRoute allowedRoles={['MENTOR', 'CHIEF_MENTOR']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <MentorDashboard />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="students" element={
-                    <ProtectedRoute allowedRoles={['MENTOR']}>
+                    <ProtectedRoute allowedRoles={['MENTOR', 'CHIEF_MENTOR']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <MentorStudents />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="attendance" element={
-                    <ProtectedRoute allowedRoles={['MENTOR']}>
+                    <ProtectedRoute allowedRoles={['MENTOR', 'CHIEF_MENTOR']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <MentorAttendance />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="students/:id" element={
-                    <ProtectedRoute allowedRoles={['MENTOR']}>
+                    <ProtectedRoute allowedRoles={['MENTOR', 'CHIEF_MENTOR']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <MentorStudentDetails />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="profile" element={
-                    <ProtectedRoute allowedRoles={['MENTOR']}>
+                    <ProtectedRoute allowedRoles={['MENTOR', 'CHIEF_MENTOR']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <MentorProfile />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="settings" element={
-                    <ProtectedRoute allowedRoles={['MENTOR']}>
+                    <ProtectedRoute allowedRoles={['MENTOR', 'CHIEF_MENTOR']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <MentorSettings />
                       </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="approvals" element={
-                    <ProtectedRoute allowedRoles={['MENTOR']}>
+                    <ProtectedRoute allowedRoles={['MENTOR', 'CHIEF_MENTOR']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <MentorApprovals />
                       </Suspense>
@@ -232,7 +232,7 @@ function App() {
                     </ProtectedRoute>
                   } />
                   <Route path="events" element={
-                    <ProtectedRoute allowedRoles={['MENTOR']}>
+                    <ProtectedRoute allowedRoles={['MENTOR', 'CHIEF_MENTOR']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <MentorEvents />
                       </Suspense>
@@ -246,7 +246,7 @@ function App() {
                     </ProtectedRoute>
                   } />
                   <Route path="mails" element={
-                    <ProtectedRoute allowedRoles={['MENTOR']}>
+                    <ProtectedRoute allowedRoles={['MENTOR', 'CHIEF_MENTOR']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <MentorMails />
                       </Suspense>

@@ -12,19 +12,18 @@ import {
     DialogHeader,
     DialogTitle,
 } from "../../components/ui/dialog"
-import { Eye, EyeOff, Lock, Mail, GraduationCap, UserCheck, Briefcase, AlertTriangle } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, GraduationCap, AlertTriangle } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { loginSchema } from '../../utils/validators';
 
-const formSchema = loginSchema.extend({
-    role: z.enum(['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER']),
-});
+const formSchema = loginSchema.pick({ email: true, password: true });
 
 type FormValues = z.infer<typeof formSchema>;
 
 const Login = () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { login } = useAuth();
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
@@ -35,9 +34,6 @@ const Login = () => {
 
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            role: 'STUDENT',
-        }
     });
 
     // Check maintenance status on component mount
@@ -62,17 +58,37 @@ const Login = () => {
     const onSubmit = async (data: FormValues) => {
         try {
             setError(null);
-            await login(data);
-            switch (data.role) {
-                case 'STUDENT': navigate('/student/dashboard'); break;
-                case 'MENTOR': navigate('/mentor/dashboard'); break;
-                case 'PLACEMENT_OFFICER': navigate('/placement/dashboard'); break;
+            const result = await login(data);
+            const user = result?.user || result;
+
+            if (!user || !user.role) {
+                throw new Error('Invalid response from server');
+            }
+
+            switch (user.role) {
+                case 'STUDENT':
+                    navigate('/student/dashboard');
+                    break;
+                case 'MENTOR':
+                case 'CHIEF_MENTOR':
+                    navigate('/mentor/dashboard');
+                    break;
+                case 'PLACEMENT_OFFICER':
+                    navigate('/placement/dashboard');
+                    break;
+                case 'ADMIN':
+                case 'SUB_ADMIN':
+                    // Should theoretically use admin login, but if allowed:
+                    navigate('/admin/dashboard');
+                    break;
+                default:
+                    navigate('/unauthorized');
             }
         } catch (err: any) {
             if (err?.response?.status === 503) {
                 setShowMaintenance(true);
             } else {
-                setError(err?.response?.data?.message || 'Invalid credentials');
+                setError(err?.response?.data?.message || err.message || 'Invalid credentials');
             }
         }
     };
@@ -148,28 +164,6 @@ const Login = () => {
                                     {error}
                                 </div>
                             )}
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Role</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <label className={`flex flex-col items-center justify-center p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${errors.role ? 'border-destructive' : 'border-input'} has-[:checked]:bg-primary/5 has-[:checked]:border-primary`}>
-                                        <input type="radio" value="STUDENT" className="sr-only" {...register('role')} />
-                                        <GraduationCap className="w-6 h-6 mb-1 text-primary" />
-                                        <span className="text-xs font-medium">Student</span>
-                                    </label>
-                                    <label className={`flex flex-col items-center justify-center p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${errors.role ? 'border-destructive' : 'border-input'} has-[:checked]:bg-primary/5 has-[:checked]:border-primary`}>
-                                        <input type="radio" value="MENTOR" className="sr-only" {...register('role')} />
-                                        <UserCheck className="w-6 h-6 mb-1 text-primary" />
-                                        <span className="text-xs font-medium">Mentor</span>
-                                    </label>
-                                    <label className={`flex flex-col items-center justify-center p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors ${errors.role ? 'border-destructive' : 'border-input'} has-[:checked]:bg-primary/5 has-[:checked]:border-primary`}>
-                                        <input type="radio" value="PLACEMENT_OFFICER" className="sr-only" {...register('role')} />
-                                        <Briefcase className="w-6 h-6 mb-1 text-primary" />
-                                        <span className="text-xs font-medium">Placement</span>
-                                    </label>
-                                </div>
-                                {errors.role && <p className="text-xs text-destructive">{errors.role.message}</p>}
-                            </div>
 
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Email</label>

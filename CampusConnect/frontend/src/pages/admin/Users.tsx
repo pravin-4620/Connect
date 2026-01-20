@@ -211,10 +211,12 @@ const AdminUsers = () => {
     const getRoleBadge = (role: string) => {
         switch (role) {
             case 'ADMIN': return <Badge variant="destructive">Admin</Badge>;
+            case 'SUB_ADMIN': return <Badge variant="destructive" className="bg-rose-600 hover:bg-rose-700">Sub Admin</Badge>;
+            case 'CHIEF_MENTOR': return <Badge variant="default" className="bg-indigo-600 hover:bg-indigo-700">Chief Mentor</Badge>;
             case 'MENTOR': return <Badge variant="default" className="bg-purple-600 hover:bg-purple-700">Mentor</Badge>;
             case 'PLACEMENT_OFFICER': return <Badge variant="secondary" className="bg-orange-100 text-orange-800">Placement</Badge>;
             case 'STUDENT': return <Badge variant="outline">Student</Badge>;
-            default: return <Badge variant="outline">{role}</Badge>;
+            default: return <Badge variant="outline">{role.replace('_', ' ')}</Badge>;
         }
     };
 

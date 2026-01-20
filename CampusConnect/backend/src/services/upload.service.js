@@ -32,13 +32,16 @@ const FILE_TYPES = {
         ]
     },
     studyMaterial: {
-        extensions: ['.pdf', '.ppt', '.pptx', '.zip'],
+        extensions: ['.pdf', '.ppt', '.pptx', '.zip', '.doc', '.docx'],
         maxSize: 50 * 1024 * 1024, // 50MB
         mimeTypes: [
             'application/pdf',
             'application/vnd.ms-powerpoint',
             'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'application/zip'
+            'application/zip',
+            'application/x-zip-compressed',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         ]
     },
     profilePicture: {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { chatAPI } from '../../services/api';
+import { chatAPI, mentorAPI } from '../../services/api';
 import { socketService } from '../../services/socket';
 import { cn } from '../../utils/cn';
 import {
@@ -34,7 +34,9 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
     const { user, logout } = useAuth();
     const location = useLocation();
     const [unreadCount, setUnreadCount] = useState(0);
+    const [approvalsCount, setApprovalsCount] = useState(0);
 
+    // Fetch counts
     useEffect(() => {
         const fetchUnread = async () => {
             try {
@@ -45,16 +47,25 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
             }
         };
 
+        const fetchApprovals = async () => {
+            if (user?.role === 'MENTOR' || user?.role === 'CHIEF_MENTOR') {
+                try {
+                    const res = await mentorAPI.getDashboard();
+                    const data = res.data?.data || res.data;
+                    setApprovalsCount(data?.stats?.pendingApprovals || 0);
+                } catch (error) { console.error(error); }
+            }
+        };
+
         if (user) {
             fetchUnread();
+            fetchApprovals();
         }
 
         const handleNewMessage = (message: any) => {
-            // Don't increment for own messages
             if (message.senderId === user?.id) return;
             setUnreadCount(prev => prev + 1);
         };
-
         const handleChatRead = () => {
             fetchUnread();
         };
@@ -68,7 +79,7 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
         };
     }, [user]);
 
-    // Cleanup redundant or old useEffects if any
+    // Update unread count when location changes to chat
     useEffect(() => {
         if (location.pathname.includes('/chat')) {
             chatAPI.getUnreadCount().then(res => setUnreadCount(res.data.data?.count || 0)).catch(() => { });
@@ -89,12 +100,22 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
                     { icon: Mail, label: 'Inbox', path: '/student/mails' },
                     { icon: UserCheck, label: 'Gate Pass', path: '/student/gate-pass' },
                 ];
+            case 'CHIEF_MENTOR':
+                return [
+                    { icon: LayoutDashboard, label: 'Dashboard', path: '/mentor/dashboard' },
+                    { icon: Users, label: 'My Students', path: '/mentor/students' },
+                    { icon: ClipboardCheck, label: 'Attendance', path: '/mentor/attendance' },
+                    { icon: UserCheck, label: 'Approvals', path: '/mentor/approvals', badge: approvalsCount },
+                    { icon: Calendar, label: 'Events', path: '/mentor/events' },
+                    { icon: Mail, label: 'Inbox', path: '/mentor/mails' },
+                    { icon: Settings, label: 'Settings', path: '/mentor/settings' },
+                ];
             case 'MENTOR':
                 return [
                     { icon: LayoutDashboard, label: 'Dashboard', path: '/mentor/dashboard' },
                     { icon: Users, label: 'My Students', path: '/mentor/students' },
                     { icon: ClipboardCheck, label: 'Attendance', path: '/mentor/attendance' },
-                    { icon: UserCheck, label: 'Approvals', path: '/mentor/approvals' },
+                    { icon: UserCheck, label: 'Approvals', path: '/mentor/approvals', badge: approvalsCount },
                     { icon: FileText, label: 'Assignments', path: '/mentor/assignments' },
                     { icon: Calendar, label: 'Events', path: '/mentor/events' },
                     { icon: BookOpen, label: 'Study Materials', path: '/mentor/study-materials' },
@@ -129,8 +150,6 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
     };
 
     const menuItems = getMenuItems();
-
-    // Determine logo display logic based on collapsed prop
     const showLogoText = !collapsed;
     const justifyClass = collapsed ? "justify-center" : "";
 
@@ -152,7 +171,7 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
                         to={item.path}
                         onClick={onItemClick}
                         className={({ isActive }) => cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-md transition-all group",
+                            "flex items-center gap-3 px-3 py-2.5 rounded-md transition-all group relative",
                             isActive
                                 ? "bg-primary text-primary-foreground shadow-sm"
                                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -160,8 +179,31 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
                         )}
                         title={collapsed ? item.label : undefined}
                     >
-                        <item.icon size={20} className={cn("flex-shrink-0", !collapsed && "mr-1")} />
-                        {!collapsed && <span className="font-medium truncate">{item.label}</span>}
+                        <div className="relative flex items-center">
+                            <item.icon size={20} className={cn("flex-shrink-0", !collapsed && "mr-1")} />
+                            {/* Unified Badge Logic */}
+                            {((item as any).badge > 0) && (
+                                <span className={cn(
+                                    "absolute flex h-2.5 w-2.5",
+                                    collapsed ? "-top-1 -right-1" : "-top-1 -right-0.5",
+                                    !collapsed && "hidden"
+                                )}>
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                                </span>
+                            )}
+                        </div>
+
+                        {!collapsed && (
+                            <div className="flex justify-between items-center bg-transparent flex-1 w-full overflow-hidden">
+                                <span className="font-medium truncate">{item.label}</span>
+                                {((item as any).badge > 0) && (
+                                    <span className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded-full min-w-[18px] text-center ml-2">
+                                        {(item as any).badge}
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </NavLink>
                 ))}
 
@@ -183,7 +225,7 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
                         {unreadCount > 0 && (
                             <span className={cn(
                                 "absolute -top-1 -right-1 flex h-2.5 w-2.5",
-                                collapsed ? "" : "-right-0" // Adjust position if needed
+                                collapsed ? "-top-1 -right-1" : "hidden"
                             )}>
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
@@ -194,7 +236,7 @@ export const SidebarNav = ({ collapsed = false, onItemClick }: SidebarNavProps) 
                         <div className="flex justify-between items-center bg-transparent flex-1">
                             <span className="font-medium">Messages</span>
                             {unreadCount > 0 && (
-                                <span className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                                <span className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded-full min-w-[18px] text-center ml-2">
                                     {unreadCount}
                                 </span>
                             )}
@@ -230,7 +272,7 @@ const Sidebar = () => {
     return (
         <div
             className={cn(
-                "hidden md:flex h-screen bg-card border-r border-border transition-all duration-300 flex-col sticky top-0 relative", // Added relative
+                "hidden md:flex h-screen bg-card border-r border-border transition-all duration-300 flex-col sticky top-0 relative",
                 collapsed ? "w-20" : "w-64"
             )}
         >
@@ -249,4 +291,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-

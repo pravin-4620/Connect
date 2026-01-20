@@ -453,6 +453,56 @@ export const createMapping = async (req, res) => {
 };
 
 /**
+ * Assign Chief Mentor to Mentor
+ */
+export const createMentorMapping = async (req, res) => {
+    try {
+        const { mentorId, chiefMentorId } = req.body;
+
+        if (!mentorId) {
+            return error(res, 'Mentor ID is required', 400);
+        }
+
+        const mentor = await prisma.mentor.findUnique({
+            where: { id: mentorId }
+        });
+
+        if (!mentor) {
+            return error(res, 'Mentor not found', 404);
+        }
+
+        if (chiefMentorId) {
+            const chief = await prisma.mentor.findUnique({
+                where: { id: chiefMentorId }
+            });
+            if (!chief) {
+                return error(res, 'Chief Mentor not found', 404);
+            }
+        }
+
+        const updated = await prisma.mentor.update({
+            where: { id: mentorId },
+            data: {
+                chiefMentorId: chiefMentorId || null
+            },
+            include: { user: true, chiefMentor: { include: { user: true } } }
+        });
+
+        // Propagate to students
+        await prisma.student.updateMany({
+            where: { mentorId: mentorId },
+            data: { chiefMentorId: chiefMentorId || null }
+        });
+
+        return success(res, { mentor: updated }, 'Mentor assigned to Chief Mentor, and students updated');
+
+    } catch (err) {
+        console.error('Create mentor mapping error:', err);
+        return error(res, 'Failed to update mentor mapping', 500);
+    }
+};
+
+/**
  * Update student mapping
  */
 export const updateMapping = async (req, res) => {
@@ -603,6 +653,18 @@ export const getMentors = async (req, res) => {
                 },
                 _count: {
                     select: { students: true }
+                },
+                chiefMentor: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                email: true,
+                                firstName: true,
+                                lastName: true
+                            }
+                        }
+                    }
                 }
             },
             orderBy: {

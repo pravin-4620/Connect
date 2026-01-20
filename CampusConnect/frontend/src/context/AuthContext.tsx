@@ -10,7 +10,7 @@ interface AuthContextType {
     token: string | null;
     loading: boolean;
     error: string | null;
-    login: (data: any, isAdmin?: boolean) => Promise<void>;
+    login: (data: any, isAdmin?: boolean) => Promise<any>;
     logout: () => void;
     isAuthenticated: boolean;
     hasRole: (roles: Role[]) => boolean;
@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(user);
             socketService.connect();
             setTimeout(() => socketService.joinUser(user.id), 500);
+            return response.data.data;
         } catch (err: any) {
             setError(err.response?.data?.message || 'Login failed');
             throw err;

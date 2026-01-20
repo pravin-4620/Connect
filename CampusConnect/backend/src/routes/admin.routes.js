@@ -22,7 +22,8 @@ import {
     toggleBlockUser,
     exportUsersExcel,
     getAdminChats,
-    archiveAnnouncement
+    archiveAnnouncement,
+    createMentorMapping
 } from '../controllers/admin.controller.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 
@@ -50,6 +51,7 @@ router.get('/chats', getAdminChats);
 // Student Mappings
 router.get('/mappings', getStudentMappings);
 router.post('/mappings', createMapping);
+router.post('/mappings/mentor', createMentorMapping); // New Route
 router.put('/mappings/:mappingId', updateMapping);
 router.post('/mappings/bulk-assign', bulkAssignMentors);
 router.get('/mentors', getMentors);

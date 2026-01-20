@@ -160,38 +160,76 @@ const MentorDashboard = () => {
                 </Card>
             </div>
 
-            {/* Recent Activity */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        {stats?.activity?.map((item: any) => (
-                            <div key={item.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                                <div className="flex items-center gap-4">
-                                    <div className={`p-2 rounded-full ${item.type === 'GATE_PASS' ? 'bg-orange-100 text-orange-600' :
-                                        item.type === 'ASSIGNMENT' ? 'bg-blue-100 text-blue-600' :
-                                            'bg-purple-100 text-purple-600'
-                                        }`}>
-                                        {item.type === 'GATE_PASS' ? <Briefcase className="h-4 w-4" /> :
-                                            item.type === 'ASSIGNMENT' ? <FileText className="h-4 w-4" /> :
-                                                <Calendar className="h-4 w-4" />}
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium">{item.message}</p>
-                                        <p className="text-xs text-muted-foreground">{item.time}</p>
-                                    </div>
-                                </div>
+            {/* Activity & Announcements */}
+            <div className="grid gap-4 md:grid-cols-2">
+                {/* Recent Activity */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Recent Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {stats?.activity?.length > 0 ? (
+                                stats.activity.map((item: any) => (
+                                    <div key={item.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-2 rounded-full ${item.type === 'GATE_PASS' ? 'bg-orange-100 text-orange-600' :
+                                                item.type === 'ASSIGNMENT' ? 'bg-blue-100 text-blue-600' :
+                                                    'bg-purple-100 text-purple-600'
+                                                }`}>
+                                                {item.type === 'GATE_PASS' ? <Briefcase className="h-4 w-4" /> :
+                                                    item.type === 'ASSIGNMENT' ? <FileText className="h-4 w-4" /> :
+                                                        <Calendar className="h-4 w-4" />}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium">{item.message}</p>
+                                                <p className="text-xs text-muted-foreground">{item.time}</p>
+                                            </div>
+                                        </div>
 
-                                {item.type === 'GATE_PASS' && (
-                                    <Button variant="outline" size="sm" onClick={() => navigate('/mentor/approvals')}>Review</Button>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+                                        {item.type === 'GATE_PASS' && (
+                                            <Button variant="outline" size="sm" onClick={() => navigate('/mentor/approvals')}>Review</Button>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Announcements */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Announcements</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {stats?.announcements?.length > 0 ? (
+                                stats.announcements.map((item: any) => (
+                                    <div key={item.id} className="border-b pb-4 last:border-0 last:pb-0">
+                                        <div className="flex justify-between items-start">
+                                            <h4 className="font-semibold text-sm">{item.title}</h4>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${item.priority === 'HIGH' ? 'bg-red-100 text-red-700' :
+                                                    item.priority === 'LOW' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                                                }`}>
+                                                {item.priority}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{item.content}</p>
+                                        <p className="text-[10px] text-muted-foreground mt-2 text-right">
+                                            {new Date(item.createdAt).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">No announcements</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 };

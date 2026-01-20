@@ -578,7 +578,10 @@ export const submitAssignment = async (req, res) => {
             return error(res, 'Assignment not found', 404);
         }
 
-        // Check if already submitted
+        // Check if due date has passed
+        if (new Date() > assignment.dueDate) {
+            return error(res, 'Assignment is locked due to deadline', 400);
+        }
         const existingSubmission = await prisma.assignmentSubmission.findFirst({
             where: {
                 assignmentId,

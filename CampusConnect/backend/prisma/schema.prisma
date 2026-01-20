@@ -26,6 +26,7 @@ enum EventStatus {
 
 enum ApprovalStatus {
   PENDING
+  MENTOR_APPROVED
   APPROVED
   REJECTED
 }
@@ -130,6 +131,12 @@ model Mentor {
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   students        Student[]
   chiefMentorStudents Student[] @relation("ChiefMentor")
+  
+  // Hierarchy: Mentees (other mentors) reporting to this Chief Mentor
+  chiefMentorId   String?
+  chiefMentor     Mentor?   @relation("MentorToChief", fields: [chiefMentorId], references: [id])
+  mentees         Mentor[]  @relation("MentorToChief")
+
   assignments     Assignment[]
   studyMaterials  StudyMaterial[]
   approvedGatePasses GatePass[]
@@ -191,6 +198,7 @@ model Event {
   description     String
   eventDate       DateTime
   location        String?
+  url             String?
   createdById     String      // ID of mentor or placement officer
   createdByRole   Role        // MENTOR or PLACEMENT_OFFICER
   maxParticipants Int?

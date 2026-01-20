@@ -183,6 +183,7 @@ export const adminAPI = {
     updateUser: (id: string, data: any) => api.put(`/admin/users/${id}`, data),
     deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
     createMapping: (data: any) => api.post('/admin/mappings', data),
+    createMentorMapping: (data: any) => api.post('/admin/mappings/mentor', data),
     bulkAssignMentors: (assignments: { studentId: string, mentorId: string }[]) => api.post('/admin/mappings/bulk-mentors', { assignments }),
     getSettings: () => api.get('/admin/settings'),
     updateSettings: (data: any) => api.put('/admin/settings', data),

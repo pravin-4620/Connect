@@ -31,19 +31,27 @@ export const getDashboard = async (req, res) => {
         }
 
         // Get pending approvals count
+        // Get pending approvals count (GatePass only for stats, or sum of GatePass + Events?)
+        // Usually stats show total pending items.
         const pendingGatePasses = await prisma.gatePass.count({
             where: {
-                student: { mentorId: mentor.id },
-                status: 'PENDING'
+                OR: [
+                    { student: { mentorId: mentor.id }, status: 'PENDING' },
+                    { student: { chiefMentorId: mentor.id }, status: 'MENTOR_APPROVED' }
+                ]
             }
         });
 
-        const pendingEventRegistrations = await prisma.eventRegistration.count({
+        const pendingEvents = await prisma.eventRegistration.count({
             where: {
-                event: { createdById: mentor.id },
-                status: 'PENDING'
+                OR: [
+                    { event: { createdById: mentor.id }, status: 'PENDING' },
+                    { student: { chiefMentorId: mentor.id }, status: 'MENTOR_APPROVED' }
+                ]
             }
         });
+
+        const pendingApprovals = pendingGatePasses + pendingEvents;
 
         // Get upcoming events
         const upcomingEvents = await prisma.event.count({
@@ -101,6 +109,19 @@ export const getDashboard = async (req, res) => {
         const totalStudents = mentor.students.length;
         const unplacedCount = totalStudents - placedCount;
 
+        // Get announcements
+        const announcements = await prisma.announcement.findMany({
+            where: {
+                OR: [
+                    { targetRole: 'MENTOR' },
+                    { targetRole: null }
+                ],
+                isArchived: false
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 3
+        });
+
         return success(res, {
             ...mentor, // Return mentor details at root or inside a wrapper if frontend expects
             // Frontend Dashboard.tsx expects data structure: { totalStudents, pendingApprovals, ... } directly in data.data or similar
@@ -121,7 +142,8 @@ export const getDashboard = async (req, res) => {
                 { name: 'Placed', value: placedCount },
                 { name: 'Unplaced', value: unplacedCount },
             ],
-            activity: activityWithTime
+            activity: activityWithTime,
+            announcements
         }, 'Dashboard stats fetched');
     } catch (err) {
         console.error('Get mentor dashboard error:', err);
@@ -361,7 +383,8 @@ export const getBatchAttendance = async (req, res) => {
             studentId: s.id,
             studentName: `${s.user.firstName} ${s.user.lastName}`,
             rollNumber: s.rollNumber,
-            status: s.attendanceRecords[0]?.status || 'PRESENT' // Default to PRESENT if no record
+            status: s.attendanceRecords[0]?.status || 'PRESENT', // Default to PRESENT if no record
+            isMarked: s.attendanceRecords.length > 0
         }));
 
         return success(res, { attendance }, 'Batch attendance fetched');
@@ -513,7 +536,7 @@ export const getStudentById = async (req, res) => {
 export const createEvent = async (req, res) => {
     try {
         const userId = req.userId;
-        const { title, description, eventDate, location, maxParticipants } = req.body;
+        const { title, description, eventDate, location, url, maxParticipants } = req.body;
 
         if (!title || !description || !eventDate) {
             return error(res, 'Title, description, and event date are required', 400);
@@ -529,6 +552,7 @@ export const createEvent = async (req, res) => {
                 description,
                 eventDate: new Date(eventDate),
                 location,
+                url,
                 maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
                 createdById: mentor.id,
                 createdByRole: 'MENTOR',
@@ -550,7 +574,7 @@ export const updateEvent = async (req, res) => {
     try {
         const userId = req.userId;
         const { eventId } = req.params;
-        const { title, description, eventDate, location, maxParticipants, status } = req.body;
+        const { title, description, eventDate, location, url, maxParticipants, status } = req.body;
 
         const mentor = await prisma.mentor.findUnique({
             where: { userId }
@@ -576,6 +600,7 @@ export const updateEvent = async (req, res) => {
                 description: description || event.description,
                 eventDate: eventDate ? new Date(eventDate) : event.eventDate,
                 location: location !== undefined ? location : event.location,
+                url: url !== undefined ? url : event.url,
                 maxParticipants: maxParticipants !== undefined ? parseInt(maxParticipants) : event.maxParticipants,
                 status: status || event.status
             }
@@ -641,8 +666,10 @@ export const getApprovals = async (req, res) => {
         if (!type || type === 'gatepass') {
             gatePasses = await prisma.gatePass.findMany({
                 where: {
-                    student: { mentorId: mentor.id },
-                    status: 'PENDING'
+                    OR: [
+                        { student: { mentorId: mentor.id } },
+                        { student: { chiefMentorId: mentor.id } }
+                    ]
                 },
                 include: {
                     student: {
@@ -656,8 +683,10 @@ export const getApprovals = async (req, res) => {
         if (!type || type === 'event') {
             eventRegistrations = await prisma.eventRegistration.findMany({
                 where: {
-                    event: { createdById: mentor.id },
-                    status: 'PENDING'
+                    OR: [
+                        { event: { createdById: mentor.id } },
+                        { student: { chiefMentorId: mentor.id } }
+                    ]
                 },
                 include: {
                     event: true,
@@ -703,14 +732,36 @@ export const updateApproval = async (req, res) => {
                 return error(res, 'Gate pass not found', 404);
             }
 
-            if (gatePass.student.mentorId !== mentor.id) {
-                return error(res, 'You can only approve gate passes for your students', 403);
+            let newStatus = status;
+
+            // Authorization and Workflow Logic
+            if (status === 'APPROVED') {
+                if (gatePass.student.mentorId === mentor.id) {
+                    // Mentor approving
+                    // If student has a Chief Mentor, forward it (MENTOR_APPROVED)
+                    // Else, final approval
+                    newStatus = gatePass.student.chiefMentorId ? 'MENTOR_APPROVED' : 'APPROVED';
+                } else if (gatePass.student.chiefMentorId === mentor.id) {
+                    // Chief Mentor approving
+                    if (gatePass.status !== 'MENTOR_APPROVED') {
+                        return error(res, 'Request must be approved by Mentor first', 400);
+                    }
+                    newStatus = 'APPROVED';
+                } else {
+                    return error(res, 'Unauthorized', 403);
+                }
+            } else {
+                // REJECTED
+                // Either can reject?
+                if (gatePass.student.mentorId !== mentor.id && gatePass.student.chiefMentorId !== mentor.id) {
+                    return error(res, 'Unauthorized', 403);
+                }
             }
 
             const updated = await prisma.gatePass.update({
                 where: { id: approvalId },
                 data: {
-                    status,
+                    status: newStatus,
                     approvedById: mentor.id,
                     approvalNote: note
                 },
@@ -719,28 +770,44 @@ export const updateApproval = async (req, res) => {
                 }
             });
 
-            return success(res, { gatePass: updated }, `Gate pass ${status.toLowerCase()}`);
+            return success(res, { gatePass: updated }, `Gate pass ${newStatus.toLowerCase().replace('_', ' ')}`);
 
         } else if (type === 'event') {
             const registration = await prisma.eventRegistration.findUnique({
                 where: { id: approvalId },
-                include: { event: true }
+                include: { event: true, student: true }
             });
 
             if (!registration) {
                 return error(res, 'Event registration not found', 404);
             }
 
-            if (registration.event.createdById !== mentor.id) {
-                return error(res, 'You can only approve registrations for your events', 403);
+            let newStatus = status;
+
+            // Simple logic: if Event Creator (Mentor) -> Forward to Chief -> Approve
+            // But usually event host approves. 
+            // If User Requirement "event request... forwarded to chief", implies 2-step.
+
+            if (status === 'APPROVED') {
+                if (registration.event.createdById === mentor.id) {
+                    newStatus = registration.student.chiefMentorId ? 'MENTOR_APPROVED' : 'APPROVED';
+                } else if (registration.student.chiefMentorId === mentor.id) {
+                    newStatus = 'APPROVED';
+                } else {
+                    return error(res, 'Unauthorized', 403);
+                }
+            } else {
+                if (registration.event.createdById !== mentor.id && registration.student.chiefMentorId !== mentor.id) {
+                    return error(res, 'Unauthorized', 403);
+                }
             }
 
             const updated = await prisma.eventRegistration.update({
                 where: { id: approvalId },
-                data: { status }
+                data: { status: newStatus }
             });
 
-            return success(res, { registration: updated }, `Event registration ${status.toLowerCase()}`);
+            return success(res, { registration: updated }, `Event registration ${newStatus.toLowerCase().replace('_', ' ')}`);
 
         } else {
             return error(res, 'Invalid approval type', 400);
@@ -790,7 +857,7 @@ export const uploadMaterial = async (req, res) => {
         return success(res, { material }, 'Study material uploaded successfully');
     } catch (err) {
         console.error('Upload material error:', err);
-        return error(res, 'Failed to upload study material', 500);
+        return error(res, 'Failed to upload study material', 500, err.message);
     }
 };
 
