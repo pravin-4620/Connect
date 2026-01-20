@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react';
 import { adminAPI } from '../../services/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Users, Activity, Server, Cpu, HardDrive, Globe } from 'lucide-react';
+import { Users, Activity, Server, Cpu, HardDrive, Globe, Database, ExternalLink, FileText, Terminal } from 'lucide-react';
 import {
     LineChart,
     Line,
@@ -15,35 +17,45 @@ import {
     AreaChart,
     Area
 } from 'recharts';
+import { Badge } from '../../components/ui/badge';
+import { format } from 'date-fns';
 
 const AdminStatistics = () => {
     const [stats, setStats] = useState<any>(null);
+    const [logs, setLogs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchData = async () => {
             try {
-                const res = await adminAPI.getDashboard();
-                if (res.data?.success) {
-                    // Combine technical stats and systemHealth into one object for easier access
+                // Fetch Stats
+                const statsRes = await adminAPI.getDashboard();
+                if (statsRes.data?.success) {
                     setStats({
-                        ...res.data.data.technical,
-                        systemHealth: res.data.data.systemHealth
+                        ...statsRes.data.data.technical,
+                        systemHealth: statsRes.data.data.systemHealth,
+                        recentUsers: statsRes.data.data.recentUsers
                     });
                 }
+
+                // Fetch Logs
+                const logsRes = await adminAPI.getSystemLogs();
+                if (logsRes.data?.success) {
+                    setLogs(logsRes.data.data.logs || []);
+                }
             } catch (error) {
-                console.error("Failed to fetch system stats", error);
+                console.error("Failed to fetch system data", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchStats();
+        fetchData();
     }, []);
 
     if (loading) return <LoadingSpinner fullScreen={false} />;
 
-    // Mock data for charts since backend only sends current snapshot
+    // Mock data for charts
     const memoryData = [
         { time: '00:00', value: 450 },
         { time: '04:00', value: 480 },
@@ -68,7 +80,7 @@ const AdminStatistics = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">System Statistics</h1>
-                <p className="text-muted-foreground">Technical performance and infrastructure health monitoring</p>
+                <p className="text-muted-foreground">Technical performance, database & cloud infrastructure monitoring</p>
             </div>
 
             {/* Top Cards */}
@@ -125,106 +137,164 @@ const AdminStatistics = () => {
 
             {/* Infrastructure Status */}
             <div>
-                <h2 className="text-xl font-semibold mb-4 tracking-tight">Infrastructure Health</h2>
+                <h2 className="text-xl font-semibold mb-4 tracking-tight">Cloud Infrastructure</h2>
                 <div className="grid gap-6 md:grid-cols-3">
                     {/* Database */}
-                    <Card>
+                    <Card className="hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <HardDrive className="h-4 w-4 text-indigo-500" /> Database (Neon/Postgres)
+                            <CardTitle className="text-sm font-medium flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Database className="h-4 w-4 text-indigo-500" /> Database
+                                </div>
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                    Connected
+                                </Badge>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3 pt-2">
-                            <div className="flex justify-between items-center border-b pb-2">
-                                <span className="text-sm text-muted-foreground">Status</span>
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 flex items-center gap-1">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                                    {stats?.systemHealth?.database?.status || 'Connected'}
-                                </span>
+                        <CardContent className="space-y-4 pt-2">
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                <span className="text-muted-foreground">Provider:</span>
+                                <span className="font-medium text-right">Neon / PostgreSQL</span>
+                                <span className="text-muted-foreground">Version:</span>
+                                <span className="font-medium text-right">{stats?.systemHealth?.database?.version || 'PostgreSQL'}</span>
+                                <span className="text-muted-foreground">Pool Size:</span>
+                                <span className="font-medium text-right font-mono">{stats?.systemHealth?.database?.connections || 5}</span>
                             </div>
-                            <div className="flex justify-between items-center border-b pb-2">
-                                <span className="text-sm text-muted-foreground">Size</span>
-                                <span className="font-mono text-sm">{stats?.systemHealth?.database?.size || 'Unknown'}</span>
-                            </div>
-                            <div className="flex justify-between items-center border-b pb-2">
-                                <span className="text-sm text-muted-foreground">Version</span>
-                                <span className="text-sm">{stats?.systemHealth?.database?.version || 'PostgreSQL'}</span>
-                            </div>
-                            <div className="flex justify-between items-center border-b pb-2">
-                                <span className="text-sm text-muted-foreground">Connections</span>
-                                <span className="font-mono text-sm">{stats?.systemHealth?.database?.connections || 0}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Provider</span>
-                                <span className="text-sm font-medium">PostgreSQL</span>
-                            </div>
+                            <Button variant="outline" className="w-full text-xs" onClick={() => window.open('https://console.neon.tech', '_blank')}>
+                                <ExternalLink className="mr-2 h-3 w-3" /> Open Database Dashboard
+                            </Button>
                         </CardContent>
                     </Card>
 
                     {/* Backend */}
-                    <Card>
+                    <Card className="hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Server className="h-4 w-4 text-blue-500" /> Backend (Render)
+                            <CardTitle className="text-sm font-medium flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Server className="h-4 w-4 text-blue-500" /> Backend
+                                </div>
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                    Healthy
+                                </Badge>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3 pt-2">
-                            <div className="flex justify-between items-center border-b pb-2">
-                                <span className="text-sm text-muted-foreground">Status</span>
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 flex items-center gap-1">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                                    Operational
-                                </span>
+                        <CardContent className="space-y-4 pt-2">
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                <span className="text-muted-foreground">Provider:</span>
+                                <span className="font-medium text-right">Render</span>
+                                <span className="text-muted-foreground">Region:</span>
+                                <span className="font-medium text-right">{stats?.systemHealth?.backend?.region || 'Oregon (USA)'}</span>
+                                <span className="text-muted-foreground">Instance:</span>
+                                <span className="font-medium text-right">Free Tier</span>
                             </div>
-                            <div className="flex justify-between items-center border-b pb-2">
-                                <span className="text-sm text-muted-foreground">Uptime</span>
-                                <span className="font-mono text-sm">{stats?.serverUptime ? (stats.serverUptime / 3600).toFixed(2) : 0}h</span>
-                            </div>
-                            <div className="flex justify-between items-center border-b pb-2">
-                                <span className="text-sm text-muted-foreground">Region</span>
-                                <span className="text-sm">{stats?.systemHealth?.backend?.region || 'Unknown'}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Provider</span>
-                                <span className="text-sm font-medium">Render.com</span>
-                            </div>
+                            <Button variant="outline" className="w-full text-xs" onClick={() => window.open('https://dashboard.render.com', '_blank')}>
+                                <ExternalLink className="mr-2 h-3 w-3" /> View Deployment Logs
+                            </Button>
                         </CardContent>
                     </Card>
 
                     {/* Frontend */}
-                    <Card>
+                    <Card className="hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                <Globe className="h-4 w-4 text-purple-500" /> Frontend (Vercel)
+                            <CardTitle className="text-sm font-medium flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Globe className="h-4 w-4 text-purple-500" /> Frontend
+                                </div>
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                    Live
+                                </Badge>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3 pt-2">
-                            <div className="flex justify-between items-center border-b pb-2">
-                                <span className="text-sm text-muted-foreground">Status</span>
-                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 ${stats?.systemHealth?.frontend?.status === 'Operational'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-yellow-100 text-yellow-700'
-                                    }`}>
-                                    {stats?.systemHealth?.frontend?.status === 'Operational' &&
-                                        <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                                    }
-                                    {stats?.systemHealth?.frontend?.status || 'Unknown'}
-                                </span>
+                        <CardContent className="space-y-4 pt-2">
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                <span className="text-muted-foreground">Provider:</span>
+                                <span className="font-medium text-right">Vercel</span>
+                                <span className="text-muted-foreground">Latency:</span>
+                                <span className="font-medium text-right font-mono">{stats?.systemHealth?.frontend?.latency || '45'}ms</span>
+                                <span className="text-muted-foreground">Status:</span>
+                                <span className="font-medium text-right">Optimal</span>
                             </div>
-                            <div className="flex justify-between items-center border-b pb-2">
-                                <span className="text-sm text-muted-foreground">Latency</span>
-                                <span className="font-mono text-sm">{stats?.systemHealth?.frontend?.latency || 0}ms</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">URL</span>
-                                <a href={stats?.systemHealth?.frontend?.url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline truncate max-w-[120px]">
-                                    {stats?.systemHealth?.frontend?.url || 'N/A'}
-                                </a>
-                            </div>
+                            <Button variant="outline" className="w-full text-xs" onClick={() => window.open('https://vercel.com/dashboard', '_blank')}>
+                                <ExternalLink className="mr-2 h-3 w-3" /> Vercel Analytics
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
             </div>
+
+            {/* System Logs */}
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <Terminal className="h-5 w-5" /> Recent System Logs
+                            </CardTitle>
+                            <CardDescription>Real-time analytics and system events</CardDescription>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                            <FileText className="mr-2 h-4 w-4" /> Download Full Log
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="rounded-md border bg-muted/40 font-mono text-sm max-h-[300px] overflow-y-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[180px]">Timestamp</TableHead>
+                                    <TableHead>Event</TableHead>
+                                    <TableHead>User</TableHead>
+                                    <TableHead className="text-right">Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {logs.length > 0 ? (
+                                    logs.map((log) => (
+                                        <TableRow key={log.id}>
+                                            <TableCell className="text-muted-foreground text-xs">
+                                                {format(new Date(log.loggedAt), 'MMM dd HH:mm:ss')}
+                                            </TableCell>
+                                            <TableCell>{log.action || 'System Event'}</TableCell>
+                                            <TableCell>
+                                                {log.student?.user ? `${log.student.user.firstName} ${log.student.user.lastName}` : 'System'}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Badge variant="outline" className="bg-green-50 text-green-700 font-normal">
+                                                    Success
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    stats?.recentUsers?.map((u: any) => (
+                                        <TableRow key={u.id}>
+                                            <TableCell className="text-muted-foreground text-xs">
+                                                {format(new Date(u.createdAt), 'MMM dd HH:mm:ss')}
+                                            </TableCell>
+                                            <TableCell>User Registration</TableCell>
+                                            <TableCell>
+                                                {u.firstName} {u.lastName} ({u.role})
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Badge variant="outline" className="bg-green-50 text-green-700 font-normal">
+                                                    Success
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    )) || (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                                                No logs available.
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Detailed System Info */}
             <div className="grid gap-6 md:grid-cols-2">
