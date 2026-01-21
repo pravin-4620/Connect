@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 import { Badge } from '../../components/ui/badge';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { toast } from 'sonner';
-import { Loader2, Upload, FileText, X, Save, Linkedin, Github, Code, Camera } from 'lucide-react';
+import { Loader2, Upload, FileText, X, Save, Linkedin, Github, Code, Camera, Mail, Phone, Building2, Briefcase } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { z } from 'zod';
 import FileUpload from '../../components/common/FileUpload';
@@ -487,18 +487,18 @@ const Profile = () => {
                             </CardHeader>
                             <CardContent className="space-y-2 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
-                                    <span>📧</span>
+                                    <Mail className="h-4 w-4" />
                                     <span>{profileData.student.mentor.user.email}</span>
                                 </div>
                                 {profileData.student.mentor.user.phone && (
                                     <div className="flex items-center gap-2">
-                                        <span>📞</span>
+                                        <Phone className="h-4 w-4" />
                                         <span>{profileData.student.mentor.user.phone}</span>
                                     </div>
                                 )}
                                 {profileData.student.mentor.department && (
                                     <div className="flex items-center gap-2">
-                                        <span>🏢</span>
+                                        <Building2 className="h-4 w-4" />
                                         <span>{profileData.student.mentor.department}</span>
                                     </div>
                                 )}
@@ -519,18 +519,18 @@ const Profile = () => {
                             </CardHeader>
                             <CardContent className="space-y-2 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
-                                    <span>📧</span>
+                                    <Mail className="h-4 w-4" />
                                     <span>{profileData.student.chiefMentor.user.email}</span>
                                 </div>
                                 {profileData.student.chiefMentor.user.phone && (
                                     <div className="flex items-center gap-2">
-                                        <span>📞</span>
+                                        <Phone className="h-4 w-4" />
                                         <span>{profileData.student.chiefMentor.user.phone}</span>
                                     </div>
                                 )}
                                 {profileData.student.chiefMentor.department && (
                                     <div className="flex items-center gap-2">
-                                        <span>🏢</span>
+                                        <Building2 className="h-4 w-4" />
                                         <span>{profileData.student.chiefMentor.department}</span>
                                     </div>
                                 )}
@@ -551,18 +551,18 @@ const Profile = () => {
                             </CardHeader>
                             <CardContent className="space-y-2 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2">
-                                    <span>📧</span>
+                                    <Mail className="h-4 w-4" />
                                     <span>{profileData.student.placementOfficer.user.email}</span>
                                 </div>
                                 {profileData.student.placementOfficer.user.phone && (
                                     <div className="flex items-center gap-2">
-                                        <span>📞</span>
+                                        <Phone className="h-4 w-4" />
                                         <span>{profileData.student.placementOfficer.user.phone}</span>
                                     </div>
                                 )}
                                 {profileData.student.placementOfficer.designation && (
                                     <div className="flex items-center gap-2">
-                                        <span>💼</span>
+                                        <Briefcase className="h-4 w-4" />
                                         <span>{profileData.student.placementOfficer.designation}</span>
                                     </div>
                                 )}
