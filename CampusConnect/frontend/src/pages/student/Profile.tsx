@@ -286,8 +286,36 @@ const Profile = () => {
                                     {errors.phone && <span className="text-xs text-destructive">{errors.phone.message}</span>}
                                 </div>
                                 <div className="space-y-2">
+                                    <Label>Personal Email</Label>
+                                    <Input {...register('personalEmail')} type="email" placeholder="personal@example.com" />
+                                    {errors.personalEmail && <span className="text-xs text-destructive">{errors.personalEmail.message}</span>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Date of Birth</Label>
+                                    <Input {...register('dob')} type="date" />
+                                    {errors.dob && <span className="text-xs text-destructive">{errors.dob.message}</span>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Gender</Label>
+                                    <Input {...register('gender')} placeholder="Male/Female/Other" />
+                                    {errors.gender && <span className="text-xs text-destructive">{errors.gender.message}</span>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Nationality</Label>
+                                    <Input {...register('nationality')} placeholder="Indian" />
+                                    {errors.nationality && <span className="text-xs text-destructive">{errors.nationality.message}</span>}
+                                </div>
+                                <div className="space-y-2">
                                     <Label>Department</Label>
                                     <Input {...register('department')} disabled className="bg-muted" />
+                                </div>
+                                <div className="col-span-2 space-y-2">
+                                    <Label>Contact Address</Label>
+                                    <Textarea
+                                        {...register('contactAddress')}
+                                        placeholder="Full address..."
+                                        className="resize-none h-20"
+                                    />
                                 </div>
                                 <div className="col-span-2 space-y-2">
                                     <Label>About Me</Label>
@@ -296,6 +324,40 @@ const Profile = () => {
                                         placeholder="Brief introduction about yourself..."
                                         className="resize-none h-24"
                                     />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Academic Details</CardTitle>
+                                <CardDescription>Your academic performance information</CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label>CGPA</Label>
+                                    <Input {...register('cgpa', { valueAsNumber: true })} type="number" step="0.01" min="0" max="10" placeholder="8.5" />
+                                    {errors.cgpa && <span className="text-xs text-destructive">{errors.cgpa.message}</span>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Current Arrears</Label>
+                                    <Input {...register('currentArrears', { valueAsNumber: true })} type="number" min="0" placeholder="0" />
+                                    {errors.currentArrears && <span className="text-xs text-destructive">{errors.currentArrears.message}</span>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>History of Arrears</Label>
+                                    <Input {...register('historyOfArrears', { valueAsNumber: true })} type="number" min="0" placeholder="0" />
+                                    {errors.historyOfArrears && <span className="text-xs text-destructive">{errors.historyOfArrears.message}</span>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>10th Percentage</Label>
+                                    <Input {...register('tenthPercentage', { valueAsNumber: true })} type="number" step="0.01" min="0" max="100" placeholder="85.5" />
+                                    {errors.tenthPercentage && <span className="text-xs text-destructive">{errors.tenthPercentage.message}</span>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>12th Percentage</Label>
+                                    <Input {...register('twelfthPercentage', { valueAsNumber: true })} type="number" step="0.01" min="0" max="100" placeholder="90.5" />
+                                    {errors.twelfthPercentage && <span className="text-xs text-destructive">{errors.twelfthPercentage.message}</span>}
                                 </div>
                             </CardContent>
                         </Card>
@@ -408,6 +470,88 @@ const Profile = () => {
                     </div>
                 </div>
             </form>
+
+            {/* Assigned Staff Section */}
+            {profileData?.student && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Assigned Staff</CardTitle>
+                        <CardDescription>Your mentors and placement officers</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            {/* Mentor */}
+                            {profileData.student.mentor && (
+                                <div className="p-4 border rounded-lg space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="default" className="bg-purple-600">Mentor</Badge>
+                                    </div>
+                                    <h4 className="font-semibold text-lg">
+                                        {profileData.student.mentor.user.firstName} {profileData.student.mentor.user.lastName}
+                                    </h4>
+                                    <div className="text-sm space-y-1 text-muted-foreground">
+                                        <p>📧 {profileData.student.mentor.user.email}</p>
+                                        {profileData.student.mentor.user.phone && (
+                                            <p>📞 {profileData.student.mentor.user.phone}</p>
+                                        )}
+                                        {profileData.student.mentor.department && (
+                                            <p>🏢 {profileData.student.mentor.department}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Chief Mentor */}
+                            {profileData.student.chiefMentor && (
+                                <div className="p-4 border rounded-lg space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="default" className="bg-indigo-600">Chief Mentor</Badge>
+                                    </div>
+                                    <h4 className="font-semibold text-lg">
+                                        {profileData.student.chiefMentor.user.firstName} {profileData.student.chiefMentor.user.lastName}
+                                    </h4>
+                                    <div className="text-sm space-y-1 text-muted-foreground">
+                                        <p>📧 {profileData.student.chiefMentor.user.email}</p>
+                                        {profileData.student.chiefMentor.user.phone && (
+                                            <p>📞 {profileData.student.chiefMentor.user.phone}</p>
+                                        )}
+                                        {profileData.student.chiefMentor.department && (
+                                            <p>🏢 {profileData.student.chiefMentor.department}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Placement Officer */}
+                            {profileData.student.placementOfficer && (
+                                <div className="p-4 border rounded-lg space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="bg-orange-100 text-orange-800">Placement Officer</Badge>
+                                    </div>
+                                    <h4 className="font-semibold text-lg">
+                                        {profileData.student.placementOfficer.user.firstName} {profileData.student.placementOfficer.user.lastName}
+                                    </h4>
+                                    <div className="text-sm space-y-1 text-muted-foreground">
+                                        <p>📧 {profileData.student.placementOfficer.user.email}</p>
+                                        {profileData.student.placementOfficer.user.phone && (
+                                            <p>📞 {profileData.student.placementOfficer.user.phone}</p>
+                                        )}
+                                        {profileData.student.placementOfficer.designation && (
+                                            <p>💼 {profileData.student.placementOfficer.designation}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {!profileData.student.mentor && !profileData.student.chiefMentor && !profileData.student.placementOfficer && (
+                                <div className="col-span-2 text-center py-8 text-muted-foreground">
+                                    No staff assigned yet. Contact admin for assistance.
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Academic Performance Section */}
             <div className="grid gap-6 md:grid-cols-2">
