@@ -1343,6 +1343,74 @@ export const getAdminChats = async (req, res) => {
 };
 
 /**
+ * Get all bug reports (Admin)
+ */
+export const getAllBugReports = async (req, res) => {
+    try {
+        const { status, priority } = req.query;
+
+        const where = {};
+        if (status) where.status = status;
+        if (priority) where.priority = priority;
+
+        const bugReports = await prisma.bugReport.findMany({
+            where,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        firstName: true,
+                        lastName: true,
+                        role: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        return success(res, { bugReports }, 'Bug reports fetched');
+    } catch (err) {
+        console.error('Get all bug reports error:', err);
+        return error(res, 'Failed to fetch bug reports', 500);
+    }
+};
+
+/**
+ * Update bug report status (Admin)
+ */
+export const updateBugReportStatus = async (req, res) => {
+    try {
+        const { reportId } = req.params;
+        const { status } = req.body;
+
+        if (!['PENDING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'].includes(status)) {
+            return error(res, 'Invalid status', 400);
+        }
+
+        const bugReport = await prisma.bugReport.update({
+            where: { id: reportId },
+            data: { status },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        firstName: true,
+                        lastName: true,
+                        role: true
+                    }
+                }
+            }
+        });
+
+        return success(res, { bugReport }, 'Bug report status updated');
+    } catch (err) {
+        console.error('Update bug report status error:', err);
+        return error(res, 'Failed to update bug report status', 500);
+    }
+};
+
+/**
  * Update system settings
  */
-

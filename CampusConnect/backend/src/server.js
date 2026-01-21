@@ -11,6 +11,7 @@ import placementRoutes from './routes/placement.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import chatRoutes from './routes/chat.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import bugReportRoutes from './routes/bugReport.routes.js';
 import { setupSocketHandlers } from './services/chat.service.js';
 import { startEmailSyncJob } from './jobs/email-sync.job.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -77,6 +78,7 @@ app.use('/api/placement', placementRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/bug-reports', bugReportRoutes);
 
 // Error handling middleware
 // Error handling middleware

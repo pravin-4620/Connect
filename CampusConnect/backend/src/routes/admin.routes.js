@@ -24,7 +24,9 @@ import {
     getAdminChats,
     archiveAnnouncement,
     createMentorMapping,
-    resetUserPassword
+    resetUserPassword,
+    getAllBugReports,
+    updateBugReportStatus
 } from '../controllers/admin.controller.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 
@@ -68,5 +70,9 @@ router.get('/announcements', getAnnouncements);
 router.post('/announcements', createAnnouncement);
 router.put('/announcements/:id/archive', archiveAnnouncement);
 router.delete('/announcements/:id', deleteAnnouncement);
+
+// Bug Reports
+router.get('/bug-reports', getAllBugReports);
+router.put('/bug-reports/:reportId/status', updateBugReportStatus);
 
 export default router;
