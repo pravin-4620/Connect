@@ -9,11 +9,14 @@ import { toast } from 'sonner';
 import { Bug, Calendar, User, AlertCircle } from 'lucide-react';
 
 const BugReports = () => {
-    const [statusFilter, setStatusFilter] = useState<string>('');
-    const [priorityFilter, setPriorityFilter] = useState<string>('');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
     const { data, loading, refetch } = useQuery<any>(() =>
-        bugReportAPI.getAllReports({ status: statusFilter || undefined, priority: priorityFilter || undefined }),
+        bugReportAPI.getAllReports({
+            status: statusFilter !== 'all' ? statusFilter : undefined,
+            priority: priorityFilter !== 'all' ? priorityFilter : undefined
+        }),
         { dependencies: [statusFilter, priorityFilter] }
     );
 
@@ -77,7 +80,7 @@ const BugReports = () => {
                                 <SelectValue placeholder="All Statuses" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Statuses</SelectItem>
+                                <SelectItem value="all">All Statuses</SelectItem>
                                 <SelectItem value="PENDING">Pending</SelectItem>
                                 <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                                 <SelectItem value="RESOLVED">Resolved</SelectItem>
@@ -91,7 +94,7 @@ const BugReports = () => {
                                 <SelectValue placeholder="All Priorities" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">All Priorities</SelectItem>
+                                <SelectItem value="all">All Priorities</SelectItem>
                                 <SelectItem value="HIGH">High</SelectItem>
                                 <SelectItem value="MEDIUM">Medium</SelectItem>
                                 <SelectItem value="LOW">Low</SelectItem>
