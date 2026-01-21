@@ -1285,6 +1285,44 @@ export const exportUsersExcel = async (req, res) => {
 };
 
 /**
+ * Reset user password (admin function)
+ */
+export const resetUserPassword = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const DEFAULT_PASSWORD = 'password123';
+
+        // Find user first
+        const user = await prisma.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!user) {
+            return error(res, 'User not found', 404);
+        }
+
+        // Hash default password
+        const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+
+        // Update user: reset password, unlock account, reset failed attempts
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                passwordHash,
+                isBlocked: false,
+                failedLoginAttempts: 0,
+                isFirstLogin: true
+            }
+        });
+
+        return success(res, null, `Password has been reset to "${DEFAULT_PASSWORD}"`);
+    } catch (err) {
+        console.error('Reset user password error:', err);
+        return error(res, 'Failed to reset password', 500);
+    }
+};
+
+/**
  * Get all chats for admin view
  */
 export const getAdminChats = async (req, res) => {

@@ -23,7 +23,8 @@ import {
     exportUsersExcel,
     getAdminChats,
     archiveAnnouncement,
-    createMentorMapping
+    createMentorMapping,
+    resetUserPassword
 } from '../controllers/admin.controller.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 
@@ -39,6 +40,7 @@ router.get('/users', getUsers);
 router.get('/users/:userId', getUserById);
 router.put('/users/:userId', updateUser);
 router.put('/users/:userId/block', toggleBlockUser);
+router.post('/users/:userId/reset-password', resetUserPassword);
 router.delete('/users/:userId', requireRole('ADMIN'), deleteUser); // Restricted
 router.get('/users-export', exportUserData);
 router.get('/users-export-excel', exportUsersExcel);

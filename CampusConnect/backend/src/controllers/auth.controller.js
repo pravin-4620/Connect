@@ -63,8 +63,30 @@ export const login = async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
         if (!isPasswordValid) {
-            return error(res, 'Invalid credentials', 401);
+            // Increment failed login attempts
+            const attempts = (user.failedLoginAttempts || 0) + 1;
+            const updateData = { failedLoginAttempts: attempts };
+            let msg = 'Invalid credentials';
+
+            if (attempts >= 10) {
+                updateData.isBlocked = true;
+                msg = 'Account blocked due to multiple failed login attempts. Contact admin.';
+            }
+
+            await prisma.user.update({
+                where: { id: user.id },
+                data: updateData
+            });
+
+            if (attempts >= 10) return error(res, msg, 403);
+            return error(res, msg, 401);
         }
+
+        // Reset failed login attempts on success
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { failedLoginAttempts: 0 }
+        });
 
         // Generate token
         const token = generateToken(user.id, user.role);
@@ -118,8 +140,30 @@ export const adminLogin = async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
         if (!isPasswordValid) {
-            return error(res, 'Invalid credentials', 401);
+            // Increment failed login attempts
+            const attempts = (user.failedLoginAttempts || 0) + 1;
+            const updateData = { failedLoginAttempts: attempts };
+            let msg = 'Invalid credentials';
+
+            if (attempts >= 10) {
+                updateData.isBlocked = true;
+                msg = 'Account blocked due to multiple failed login attempts. Contact admin.';
+            }
+
+            await prisma.user.update({
+                where: { id: user.id },
+                data: updateData
+            });
+
+            if (attempts >= 10) return error(res, msg, 403);
+            return error(res, msg, 401);
         }
+
+        // Reset failed login attempts on success
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { failedLoginAttempts: 0 }
+        });
 
         // Generate token
         const token = generateToken(user.id, user.role);

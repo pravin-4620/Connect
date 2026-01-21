@@ -194,6 +194,7 @@ export const adminAPI = {
     exportUsersExcel: () => api.get('/admin/users-export-excel', { responseType: 'blob' }),
     getSystemLogs: () => api.get('/admin/logs'),
     toggleBlockUser: (id: string, isBlocked: boolean) => api.put(`/admin/users/${id}/block`, { isBlocked }),
+    resetUserPassword: (id: string) => api.post(`/admin/users/${id}/reset-password`),
     getChats: () => api.get('/admin/chats'),
     archiveAnnouncement: (id: string) => api.put(`/admin/announcements/${id}/archive`),
 };

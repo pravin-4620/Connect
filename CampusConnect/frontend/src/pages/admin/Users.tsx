@@ -34,7 +34,7 @@ import {
 } from '../../components/ui/table';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { toast } from 'sonner';
-import { Search, Plus, Trash2, Edit, Shield, Ban, Download } from 'lucide-react';
+import { Search, Plus, Trash2, Edit, Shield, Ban, Download, Key } from 'lucide-react';
 
 const AdminUsers = () => {
     const [users, setUsers] = useState<any[]>([]);
@@ -188,6 +188,17 @@ const AdminUsers = () => {
         }
     };
 
+    const handleResetPassword = async (id: string) => {
+        if (!confirm('Are you sure you want to reset this user\'s password to "password123"?')) return;
+        try {
+            await adminAPI.resetUserPassword(id);
+            toast.success("Password reset to 'password123'");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to reset password");
+        }
+    };
+
     const handleExport = async () => {
         setDownloading(true);
         try {
@@ -337,6 +348,9 @@ const AdminUsers = () => {
                                                     </Button>
                                                     <Button variant="ghost" size="icon" onClick={() => handleEdit(user)} disabled={currentUser?.role !== 'ADMIN' && (user.role === 'ADMIN' || user.role === 'SUB_ADMIN')}>
                                                         <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleResetPassword(user.id)} title="Reset Password">
+                                                        <Key className="h-4 w-4" />
                                                     </Button>
                                                     {currentUser?.role === 'ADMIN' && (
                                                         <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(user.id)}>
