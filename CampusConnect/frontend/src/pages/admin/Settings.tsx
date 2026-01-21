@@ -42,11 +42,18 @@ const Settings = () => {
                 const fetchedDepts = Array.isArray(s.departments) ? s.departments :
                     (s.departments ? JSON.parse(s.departments) : ['CSE', 'ECE', 'MECH', 'CIVIL', 'IT']);
 
-                // Properly handle maintenance mode - it could be boolean or string
-                const maintenanceModeValue = s.maintenanceMode;
+                // Properly handle maintenance mode - check both camelCase and snake_case
+                // Backend stores as 'maintenance_mode' but might return as 'maintenanceMode'
+                const maintenanceModeValue = s.maintenanceMode || s.maintenance_mode;
                 const isMaintenanceOn = maintenanceModeValue === true ||
                     maintenanceModeValue === 'true' ||
                     String(maintenanceModeValue) === 'true';
+
+                console.log('Fetched maintenance mode:', {
+                    raw: maintenanceModeValue,
+                    computed: isMaintenanceOn,
+                    allSettings: s
+                });
 
                 setSettings(prev => ({
                     ...prev,
