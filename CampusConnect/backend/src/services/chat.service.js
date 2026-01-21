@@ -100,7 +100,7 @@ export const setupSocketHandlers = (io) => {
                 });
 
                 // Check year restriction
-                if (sender.role === 'STUDENT' && receiver.role === 'PLACEMENT_OFFICER') {
+                if (sender.role === 'STUDENT' && (receiver.role === 'PLACEMENT_OFFICER' || receiver.role === 'PLACEMENT_HEAD')) {
                     if (sender.student.year < 3) {
                         socket.emit('error', {
                             message: 'Students in year 1-2 cannot chat with placement officers'
@@ -471,7 +471,7 @@ export const sendMessage = async (req, res) => {
         }
 
         // Check year restriction (Student <-> Placement Officer)
-        if (sender.role === 'STUDENT' && receiver.role === 'PLACEMENT_OFFICER') {
+        if (sender.role === 'STUDENT' && (receiver.role === 'PLACEMENT_OFFICER' || receiver.role === 'PLACEMENT_HEAD')) {
             if (sender.student.year < 3) {
                 return res.status(403).json({
                     success: false,

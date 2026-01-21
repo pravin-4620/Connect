@@ -8,7 +8,7 @@ export const passwordSchema = z.string()
     .regex(/[0-9]/, 'Must contain at least one number')
     .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character');
 
-export const roleSchema = z.enum(['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER', 'ADMIN']);
+export const roleSchema = z.enum(['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER', 'ADMIN', 'PLACEMENT_HEAD', 'CHIEF_MENTOR', 'SUB_ADMIN']);
 
 export const loginSchema = z.object({
     email: emailSchema,
@@ -89,6 +89,6 @@ export const gatePassSchema = z.object({
 export const announcementSchema = z.object({
     title: z.string().min(3, 'Title is required'),
     content: z.string().min(5, 'Content is required'),
-    targetRole: z.enum(['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER']).optional(),
+    targetRole: z.enum(['STUDENT', 'MENTOR', 'PLACEMENT_OFFICER', 'PLACEMENT_HEAD', 'ADMIN', 'CHIEF_MENTOR', 'SUB_ADMIN']).optional(),
     priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).default('LOW'),
 });

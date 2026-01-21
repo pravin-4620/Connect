@@ -27,9 +27,9 @@ import { checkMaintenanceMode } from '../middleware/maintenance.js';
 
 const router = express.Router();
 
-// All routes require authentication and PLACEMENT_OFFICER role
+// All routes require authentication and PLACEMENT_OFFICER or PLACEMENT_HEAD role
 router.use(authenticate);
-router.use(requireRole('PLACEMENT_OFFICER'));
+router.use(requireRole(['PLACEMENT_OFFICER', 'PLACEMENT_HEAD']));
 router.use(checkMaintenanceMode);
 
 // Dashboard

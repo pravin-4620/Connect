@@ -74,6 +74,7 @@ const Login = () => {
                     navigate('/mentor/dashboard');
                     break;
                 case 'PLACEMENT_OFFICER':
+                case 'PLACEMENT_HEAD':
                     navigate('/placement/dashboard');
                     break;
                 case 'ADMIN':

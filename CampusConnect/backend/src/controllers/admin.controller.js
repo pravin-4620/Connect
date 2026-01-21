@@ -234,7 +234,7 @@ export const updateUser = async (req, res) => {
                     data: mentorUpdate
                 });
             }
-        } else if (user.role === 'PLACEMENT_OFFICER' && user.placementOfficer) {
+        } else if ((user.role === 'PLACEMENT_OFFICER' || user.role === 'PLACEMENT_HEAD') && user.placementOfficer) {
             const officerUpdate = {};
             if (department) officerUpdate.department = department;
             if (designation) officerUpdate.designation = designation;
