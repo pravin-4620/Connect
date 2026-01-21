@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -120,11 +120,7 @@ const Login = () => {
                             <br /><br />
                             Please check back shortly or contact your administrator for more information.
                         </p>
-                        <div className="pt-4">
-                            <p className="text-xs text-muted-foreground">
-                                Admin access? <Link to="/admin/login" className="text-primary hover:underline font-medium">Login here</Link>
-                            </p>
-                        </div>
+
                     </CardContent>
                 </Card>
             </div>
