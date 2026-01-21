@@ -986,10 +986,24 @@ export const bulkAssignMentors = async (req, res) => {
 export const getSettings = async (req, res) => {
     try {
         const settings = await prisma.systemSettings.findMany();
-        const formatted = settings.reduce((acc, curr) => {
-            acc[curr.key] = curr.jsonValue || curr.value;
-            return acc;
-        }, {});
+
+        const KEY_REVERSE_MAPPING = {
+            'maintenance_mode': 'maintenanceMode'
+        };
+
+        const formatted = {};
+        settings.forEach(curr => {
+            const mappedKey = KEY_REVERSE_MAPPING[curr.key] || curr.key;
+            const value = curr.jsonValue || curr.value;
+
+            // Prioritize maintenance_mode over maintenanceMode if both exist
+            if (curr.key === 'maintenance_mode') {
+                formatted[mappedKey] = value;
+            } else if (!formatted[mappedKey]) {
+                formatted[mappedKey] = value;
+            }
+        });
+
         return success(res, { settings: formatted }, 'Settings fetched');
     } catch (err) {
         console.error('Get settings error:', err);
