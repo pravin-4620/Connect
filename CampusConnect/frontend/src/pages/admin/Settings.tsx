@@ -42,11 +42,17 @@ const Settings = () => {
                 const fetchedDepts = Array.isArray(s.departments) ? s.departments :
                     (s.departments ? JSON.parse(s.departments) : ['CSE', 'ECE', 'MECH', 'CIVIL', 'IT']);
 
+                // Properly handle maintenance mode - it could be boolean or string
+                const maintenanceModeValue = s.maintenanceMode;
+                const isMaintenanceOn = maintenanceModeValue === true ||
+                    maintenanceModeValue === 'true' ||
+                    String(maintenanceModeValue) === 'true';
+
                 setSettings(prev => ({
                     ...prev,
                     academicYear: s.academicYear || prev.academicYear,
                     semester: s.semester || prev.semester,
-                    maintenanceMode: String(s.maintenanceMode) === 'true' ? 'true' : 'false',
+                    maintenanceMode: isMaintenanceOn ? 'true' : 'false',
                     smtpHost: smtp.host || s.smtpHost || '',
                     smtpPort: smtp.port || s.smtpPort || '',
                     smtpUser: smtp.user || s.smtpUser || '',
