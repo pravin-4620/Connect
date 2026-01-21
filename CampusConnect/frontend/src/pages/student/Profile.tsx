@@ -473,84 +473,103 @@ const Profile = () => {
 
             {/* Assigned Staff Section */}
             {profileData?.student && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Assigned Staff</CardTitle>
-                        <CardDescription>Your mentors and placement officers</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-4 md:grid-cols-2">
-                            {/* Mentor */}
-                            {profileData.student.mentor && (
-                                <div className="p-4 border rounded-lg space-y-2">
+                <div className="grid gap-6 md:grid-cols-2">
+                    {/* Mentor */}
+                    {profileData.student.mentor && (
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="default" className="bg-purple-600">Mentor</Badge>
+                                </div>
+                                <CardTitle className="text-xl mt-2">
+                                    {profileData.student.mentor.user.firstName} {profileData.student.mentor.user.lastName}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                    <span>📧</span>
+                                    <span>{profileData.student.mentor.user.email}</span>
+                                </div>
+                                {profileData.student.mentor.user.phone && (
                                     <div className="flex items-center gap-2">
-                                        <Badge variant="default" className="bg-purple-600">Mentor</Badge>
+                                        <span>📞</span>
+                                        <span>{profileData.student.mentor.user.phone}</span>
                                     </div>
-                                    <h4 className="font-semibold text-lg">
-                                        {profileData.student.mentor.user.firstName} {profileData.student.mentor.user.lastName}
-                                    </h4>
-                                    <div className="text-sm space-y-1 text-muted-foreground">
-                                        <p>📧 {profileData.student.mentor.user.email}</p>
-                                        {profileData.student.mentor.user.phone && (
-                                            <p>📞 {profileData.student.mentor.user.phone}</p>
-                                        )}
-                                        {profileData.student.mentor.department && (
-                                            <p>🏢 {profileData.student.mentor.department}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Chief Mentor */}
-                            {profileData.student.chiefMentor && (
-                                <div className="p-4 border rounded-lg space-y-2">
+                                )}
+                                {profileData.student.mentor.department && (
                                     <div className="flex items-center gap-2">
-                                        <Badge variant="default" className="bg-indigo-600">Chief Mentor</Badge>
+                                        <span>🏢</span>
+                                        <span>{profileData.student.mentor.department}</span>
                                     </div>
-                                    <h4 className="font-semibold text-lg">
-                                        {profileData.student.chiefMentor.user.firstName} {profileData.student.chiefMentor.user.lastName}
-                                    </h4>
-                                    <div className="text-sm space-y-1 text-muted-foreground">
-                                        <p>📧 {profileData.student.chiefMentor.user.email}</p>
-                                        {profileData.student.chiefMentor.user.phone && (
-                                            <p>📞 {profileData.student.chiefMentor.user.phone}</p>
-                                        )}
-                                        {profileData.student.chiefMentor.department && (
-                                            <p>🏢 {profileData.student.chiefMentor.department}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
 
-                            {/* Placement Officer */}
-                            {profileData.student.placementOfficer && (
-                                <div className="p-4 border rounded-lg space-y-2">
+                    {/* Chief Mentor */}
+                    {profileData.student.chiefMentor && (
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="default" className="bg-indigo-600">Chief Mentor</Badge>
+                                </div>
+                                <CardTitle className="text-xl mt-2">
+                                    {profileData.student.chiefMentor.user.firstName} {profileData.student.chiefMentor.user.lastName}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                    <span>📧</span>
+                                    <span>{profileData.student.chiefMentor.user.email}</span>
+                                </div>
+                                {profileData.student.chiefMentor.user.phone && (
                                     <div className="flex items-center gap-2">
-                                        <Badge variant="secondary" className="bg-orange-100 text-orange-800">Placement Officer</Badge>
+                                        <span>📞</span>
+                                        <span>{profileData.student.chiefMentor.user.phone}</span>
                                     </div>
-                                    <h4 className="font-semibold text-lg">
-                                        {profileData.student.placementOfficer.user.firstName} {profileData.student.placementOfficer.user.lastName}
-                                    </h4>
-                                    <div className="text-sm space-y-1 text-muted-foreground">
-                                        <p>📧 {profileData.student.placementOfficer.user.email}</p>
-                                        {profileData.student.placementOfficer.user.phone && (
-                                            <p>📞 {profileData.student.placementOfficer.user.phone}</p>
-                                        )}
-                                        {profileData.student.placementOfficer.designation && (
-                                            <p>💼 {profileData.student.placementOfficer.designation}</p>
-                                        )}
+                                )}
+                                {profileData.student.chiefMentor.department && (
+                                    <div className="flex items-center gap-2">
+                                        <span>🏢</span>
+                                        <span>{profileData.student.chiefMentor.department}</span>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
 
-                            {!profileData.student.mentor && !profileData.student.chiefMentor && !profileData.student.placementOfficer && (
-                                <div className="col-span-2 text-center py-8 text-muted-foreground">
-                                    No staff assigned yet. Contact admin for assistance.
+                    {/* Placement Officer */}
+                    {profileData.student.placementOfficer && (
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="secondary" className="bg-orange-100 text-orange-800">Placement Officer</Badge>
                                 </div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
+                                <CardTitle className="text-xl mt-2">
+                                    {profileData.student.placementOfficer.user.firstName} {profileData.student.placementOfficer.user.lastName}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                    <span>📧</span>
+                                    <span>{profileData.student.placementOfficer.user.email}</span>
+                                </div>
+                                {profileData.student.placementOfficer.user.phone && (
+                                    <div className="flex items-center gap-2">
+                                        <span>📞</span>
+                                        <span>{profileData.student.placementOfficer.user.phone}</span>
+                                    </div>
+                                )}
+                                {profileData.student.placementOfficer.designation && (
+                                    <div className="flex items-center gap-2">
+                                        <span>💼</span>
+                                        <span>{profileData.student.placementOfficer.designation}</span>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
             )}
 
             {/* Academic Performance Section */}
