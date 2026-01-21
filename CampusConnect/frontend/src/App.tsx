@@ -52,6 +52,7 @@ const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminMappings = lazy(() => import('./pages/admin/Mappings'));
 const AdminChats = lazy(() => import('./pages/admin/Chats'));
 const AdminStatistics = lazy(() => import('./pages/admin/Statistics'));
+const AdminBugReports = lazy(() => import('./pages/admin/BugReports'));
 const PlacementInterviews = lazy(() => import('./pages/placement/Interviews'));
 
 const GmailConnected = lazy(() => import('./pages/auth/GmailConnected'));
@@ -386,6 +387,13 @@ function App() {
                     <ProtectedRoute allowedRoles={['ADMIN', 'SUB_ADMIN']}>
                       <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
                         <AdminAnnouncements />
+                      </Suspense>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="bug-reports" element={
+                    <ProtectedRoute allowedRoles={['ADMIN', 'SUB_ADMIN']}>
+                      <Suspense fallback={<LoadingSpinner fullScreen={false} />}>
+                        <AdminBugReports />
                       </Suspense>
                     </ProtectedRoute>
                   } />

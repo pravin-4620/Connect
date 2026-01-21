@@ -22,7 +22,8 @@ import {
     BarChart,
     Megaphone,
     Mail,
-    ClipboardCheck
+    ClipboardCheck,
+    Bug
 } from 'lucide-react';
 
 interface SidebarNavProps {
@@ -143,6 +144,7 @@ export const SidebarNav = ({ collapsed = false, onItemClick, onToggleCollapse }:
                     { icon: UserCheck, label: 'Mappings', path: '/admin/mappings' },
                     { icon: BarChart, label: 'System Stats', path: '/admin/statistics' },
                     { icon: Megaphone, label: 'Announcements', path: '/admin/announcements' },
+                    { icon: Bug, label: 'Bug Reports', path: '/admin/bug-reports' },
                     { icon: MessageSquare, label: 'Chat Logs', path: '/admin/chats' },
                     { icon: Settings, label: 'Settings', path: '/admin/settings' },
                 ];
@@ -153,6 +155,7 @@ export const SidebarNav = ({ collapsed = false, onItemClick, onToggleCollapse }:
                     { icon: UserCheck, label: 'Mappings', path: '/admin/mappings' },
                     { icon: BarChart, label: 'System Stats', path: '/admin/statistics' },
                     { icon: Megaphone, label: 'Announcements', path: '/admin/announcements' },
+                    { icon: Bug, label: 'Bug Reports', path: '/admin/bug-reports' },
                     { icon: MessageSquare, label: 'Chat Logs', path: '/admin/chats' },
                 ];
             default:

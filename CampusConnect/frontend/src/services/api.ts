@@ -216,4 +216,13 @@ export const commonAPI = {
     }),
 };
 
+export const bugReportAPI = {
+    submitReport: (data: any) => api.post('/bug-reports', data),
+    getMyReports: () => api.get('/bug-reports/my-reports'),
+    // Admin functions
+    getAllReports: (params?: any) => api.get('/admin/bug-reports', { params }),
+    updateReportStatus: (reportId: string, status: string) =>
+        api.put(`/admin/bug-reports/${reportId}/status`, { status }),
+};
+
 export default api;
