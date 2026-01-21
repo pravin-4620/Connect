@@ -1,0 +1,24 @@
+name: Keep Render Backend Awake
+
+on:
+  schedule:
+    # Runs every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  ping-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Render Backend
+        run: |
+          echo "Pinging backend at $(date)"
+          response=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.BACKEND_URL }})
+          echo "Response code: $response"
+          
+          if [ $response -eq 200 ]; then
+            echo "✅ Backend is awake"
+          else
+            echo "⚠️ Backend returned status: $response"
+          fi
