@@ -20,6 +20,7 @@ export const getDashboard = async (req, res) => {
             include: {
                 user: true,
                 mentor: { include: { user: true } },
+                chiefMentor: { include: { user: true } },
                 placementOfficer: { include: { user: true } }
             }
         });
@@ -125,7 +126,12 @@ export const getDashboard = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const userId = req.userId;
-        const { phone, skills, cgpa, linkedInUrl, githubUrl, leetcodeUrl, about, certificates, profilePicture } = req.body;
+        const {
+            phone, skills, cgpa, linkedInUrl, githubUrl, leetcodeUrl, about, certificates, profilePicture,
+            // New fields
+            dob, gender, nationality, contactAddress, personalEmail,
+            historyOfArrears, currentArrears, tenthPercentage, twelfthPercentage
+        } = req.body;
 
         const student = await prisma.student.findUnique({
             where: { userId },
@@ -154,20 +160,38 @@ export const updateProfile = async (req, res) => {
         }
 
         // Update student info
+        const studentUpdateData = {
+            skills: skills || student.skills,
+            cgpa: cgpa !== undefined ? parseFloat(cgpa) : student.cgpa,
+            certificates: certificates || student.certificates
+        };
+
+        // Optional fields
+        if (linkedInUrl !== undefined) studentUpdateData.linkedInUrl = linkedInUrl;
+        if (githubUrl !== undefined) studentUpdateData.githubUrl = githubUrl;
+        if (leetcodeUrl !== undefined) studentUpdateData.leetcodeUrl = leetcodeUrl;
+        if (about !== undefined) studentUpdateData.about = about;
+
+        // New personal fields
+        if (dob !== undefined) studentUpdateData.dob = dob ? new Date(dob) : null;
+        if (gender !== undefined) studentUpdateData.gender = gender;
+        if (nationality !== undefined) studentUpdateData.nationality = nationality;
+        if (contactAddress !== undefined) studentUpdateData.contactAddress = contactAddress;
+        if (personalEmail !== undefined) studentUpdateData.personalEmail = personalEmail;
+
+        // New academic fields
+        if (historyOfArrears !== undefined) studentUpdateData.historyOfArrears = parseInt(historyOfArrears) || 0;
+        if (currentArrears !== undefined) studentUpdateData.currentArrears = parseInt(currentArrears) || 0;
+        if (tenthPercentage !== undefined) studentUpdateData.tenthPercentage = parseFloat(tenthPercentage);
+        if (twelfthPercentage !== undefined) studentUpdateData.twelfthPercentage = parseFloat(twelfthPercentage);
+
         const updatedStudent = await prisma.student.update({
             where: { id: student.id },
-            data: {
-                skills: skills || student.skills,
-                cgpa: cgpa !== undefined ? parseFloat(cgpa) : student.cgpa,
-                linkedInUrl,
-                githubUrl,
-                leetcodeUrl,
-                about,
-                certificates: certificates || student.certificates
-            },
+            data: studentUpdateData,
             include: {
                 user: true,
                 mentor: { include: { user: true } },
+                chiefMentor: { include: { user: true } },
                 placementOfficer: { include: { user: true } }
             }
         });
@@ -369,6 +393,7 @@ export const getProfile = async (req, res) => {
                     }
                 },
                 mentor: { include: { user: true } },
+                chiefMentor: { include: { user: true } },
                 placementOfficer: { include: { user: true } }
             }
         });

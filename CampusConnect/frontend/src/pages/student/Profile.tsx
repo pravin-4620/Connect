@@ -60,7 +60,7 @@ const Profile = () => {
         }
     });
 
-    const { loading } = useQuery<any>(() => studentAPI.getProfile(), {
+    const { loading, data: profileData } = useQuery<any>(() => studentAPI.getProfile(), {
         dependencies: [user],
         onSuccess: (response) => {
             const data = response.student;
@@ -87,7 +87,18 @@ const Profile = () => {
                     linkedInUrl: data.linkedInUrl || '',
                     githubUrl: data.githubUrl || '',
                     leetcodeUrl: data.leetcodeUrl || '',
-                    about: data.about || ''
+                    about: data.about || '',
+                    // New fields
+                    dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : '',
+                    gender: data.gender || '',
+                    nationality: data.nationality || '',
+                    contactAddress: data.contactAddress || '',
+                    personalEmail: data.personalEmail || '',
+                    cgpa: data.cgpa || '',
+                    historyOfArrears: data.historyOfArrears || 0,
+                    currentArrears: data.currentArrears || 0,
+                    tenthPercentage: data.tenthPercentage || '',
+                    twelfthPercentage: data.twelfthPercentage || ''
                 });
 
                 setSkillsList(loadedSkills);

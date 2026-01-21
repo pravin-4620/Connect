@@ -81,6 +81,19 @@ model Student {
   year                Int       // 1, 2, 3, or 4
   department          String
   cgpa                Float?
+  
+  // Personal Details
+  dob                 DateTime?
+  gender              String?
+  nationality         String?
+  contactAddress      String?
+  personalEmail       String?
+  
+  // Academic Details
+  historyOfArrears    Int?      @default(0)
+  currentArrears      Int?      @default(0)
+  tenthPercentage     Float?
+  twelfthPercentage   Float?
 
   mentorId            String?
   chiefMentorId       String?

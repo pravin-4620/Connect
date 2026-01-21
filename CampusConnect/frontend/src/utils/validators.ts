@@ -34,6 +34,18 @@ export const userProfileSchema = z.object({
     githubUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
     leetcodeUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
     about: z.string().optional(),
+    // New personal fields
+    dob: z.string().optional(),
+    gender: z.string().optional(),
+    nationality: z.string().optional(),
+    contactAddress: z.string().optional(),
+    personalEmail: z.string().email('Invalid email').optional().or(z.literal('')),
+    // New academic fields
+    cgpa: z.number().min(0).max(10).optional(),
+    historyOfArrears: z.number().min(0).optional(),
+    currentArrears: z.number().min(0).optional(),
+    tenthPercentage: z.number().min(0).max(100).optional(),
+    twelfthPercentage: z.number().min(0).max(100).optional(),
 });
 
 export const placementSchema = z.object({
