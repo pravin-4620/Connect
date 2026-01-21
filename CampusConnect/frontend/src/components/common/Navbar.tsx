@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Bell, User, LogOut, Settings, Menu, MessageCircle } from 'lucide-react';
+import { Bell, User, LogOut, Settings, Menu, MessageCircle, Bug } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
@@ -15,11 +15,13 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
 import { SidebarNav } from './Sidebar';
 import { getFullImageUrl } from '../../utils/fileUtils';
+import ReportBugModal from './ReportBugModal';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [bugModalOpen, setBugModalOpen] = useState(false);
 
     const handleProfileClick = () => {
         if (!user) return;
@@ -88,6 +90,19 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center gap-4">
+                {/* Report Bug Button - Only for non-admin users */}
+                {user && !['ADMIN', 'SUB_ADMIN'].includes(user.role) && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="relative text-muted-foreground hover:text-foreground"
+                        onClick={() => setBugModalOpen(true)}
+                        title="Report a Bug"
+                    >
+                        <Bug className="h-5 w-5" />
+                    </Button>
+                )}
+
                 <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground" onClick={() => navigate('/chat')}>
                     <MessageCircle className="h-5 w-5" />
                 </Button>
@@ -135,6 +150,9 @@ const Navbar = () => {
                     </DropdownMenu>
                 </div>
             </div>
+
+            {/* Bug Report Modal */}
+            <ReportBugModal open={bugModalOpen} onOpenChange={setBugModalOpen} />
         </header>
     );
 };
