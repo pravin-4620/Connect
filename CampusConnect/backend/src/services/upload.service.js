@@ -1,17 +1,13 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { v2 as cloudinary } from 'cloudinary';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 
-const s3Client = new S3Client({
-    region: process.env.AWS_REGION,
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-    }
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
-
-const BUCKET_NAME = process.env.AWS_S3_BUCKET;
 
 /**
  * File type validation
@@ -81,45 +77,43 @@ const validateFile = (file, fileType) => {
 };
 
 /**
- * Generate unique filename
+ * Upload buffer to Cloudinary using a stream
  */
-const generateFileName = (originalName, prefix = '') => {
-    const ext = path.extname(originalName);
-    const uniqueId = uuidv4();
-    return `${prefix}${prefix ? '-' : ''}${uniqueId}${ext}`;
+const uploadToCloudinary = (fileBuffer, options) => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            options,
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result);
+            }
+        );
+        uploadStream.end(fileBuffer);
+    });
 };
 
 /**
- * Upload file to S3
+ * Upload file to Cloudinary
  */
 export const uploadFile = async (file, fileType, folder = '') => {
     try {
         // Validate file
         validateFile(file, fileType);
 
-        // Generate unique filename
-        const fileName = generateFileName(file.originalname, fileType);
-        const key = folder ? `${folder}/${fileName}` : fileName;
+        // Upload to Cloudinary
+        const options = {
+            folder: folder ? `campusconnect/${folder}` : 'campusconnect',
+            resource_type: 'auto',
+            public_id: `${fileType}-${uuidv4()}`
+        };
 
-        // Upload to S3
-        const command = new PutObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: key,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-            ACL: 'private' // Files are private by default
-        });
-
-        await s3Client.send(command);
-
-        // Return file URL (you might want to use CloudFront URL in production)
-        const fileUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+        const result = await uploadToCloudinary(file.buffer, options);
 
         return {
-            url: fileUrl,
-            key,
-            fileName,
-            size: file.size,
+            url: result.secure_url,
+            key: result.public_id,
+            fileName: `${result.public_id}.${result.format}`,
+            size: result.bytes,
             mimeType: file.mimetype
         };
     } catch (error) {
@@ -157,17 +151,12 @@ export const uploadProfilePicture = async (file, userId) => {
 };
 
 /**
- * Delete file from S3
+ * Delete file from Cloudinary
  */
-export const deleteFile = async (fileKey) => {
+export const deleteFile = async (publicId) => {
     try {
-        const command = new DeleteObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: fileKey
-        });
-
-        await s3Client.send(command);
-        return true;
+        const result = await cloudinary.uploader.destroy(publicId);
+        return result.result === 'ok';
     } catch (error) {
         console.error('File deletion error:', error);
         throw error;
@@ -175,33 +164,29 @@ export const deleteFile = async (fileKey) => {
 };
 
 /**
- * Generate presigned URL for private file access
- * @param {string} fileKey - S3 object key
- * @param {number} expiresIn - URL expiration in seconds (default: 1 hour)
+ * Generate URL for file access
+ * @param {string} publicId - Cloudinary public ID
  */
-export const getPresignedUrl = async (fileKey, expiresIn = 3600) => {
+export const getPresignedUrl = async (publicId) => {
     try {
-        const command = new GetObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: fileKey
-        });
-
-        const url = await getSignedUrl(s3Client, command, { expiresIn });
-        return url;
+        // For Cloudinary, we can just return the URL or use a signed one if private
+        return cloudinary.url(publicId, { secure: true });
     } catch (error) {
-        console.error('Presigned URL generation error:', error);
+        console.error('URL generation error:', error);
         throw error;
     }
 };
 
 /**
- * Extract file key from S3 URL
+ * Extract file public ID from Cloudinary URL
  */
 export const extractFileKey = (fileUrl) => {
     try {
-        const url = new URL(fileUrl);
-        // Remove leading slash
-        return url.pathname.substring(1);
+        // Example: https://res.cloudinary.com/cloud_name/image/upload/v12345678/folder/public_id.jpg
+        const parts = fileUrl.split('/');
+        const lastPart = parts[parts.length - 1];
+        const publicIdWithFolder = parts.slice(parts.indexOf('upload') + 2).join('/').split('.')[0];
+        return publicIdWithFolder || lastPart.split('.')[0];
     } catch (error) {
         console.error('File key extraction error:', error);
         return null;

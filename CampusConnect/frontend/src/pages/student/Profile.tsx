@@ -173,9 +173,14 @@ const Profile = () => {
             });
             const data = await res.json();
             if (data.success) {
-                setProfilePicUrl(data.data.url);
-                updateUser({ profilePicture: data.data.url });
-                toast.success("Image uploaded. You may need to click Save to persist other changes.");
+                const newPicUrl = data.data.url;
+                setProfilePicUrl(newPicUrl);
+
+                // Immediately persist to database
+                await studentAPI.updateProfile({ profilePicture: newPicUrl });
+
+                updateUser({ profilePicture: newPicUrl });
+                toast.success("Profile picture updated and saved successfully");
             } else {
                 toast.error("Upload failed");
             }
