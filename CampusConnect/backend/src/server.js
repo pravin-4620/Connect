@@ -80,7 +80,45 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/bug-reports', bugReportRoutes);
 
-// Error handling middleware
+// Public check endpoint (no auth required)
+app.get("/check", async (req, res) => {
+    try {
+        const users = await prisma.user.findMany({
+            include: {
+                student: true,
+                mentor: true,
+                placementOfficer: true
+            },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                role: true,
+                phone: true,
+                profilePicture: true,
+                isBlocked: true,
+                createdAt: true,
+                student: true,
+                mentor: true,
+                placementOfficer: true
+            }
+        });
+
+        res.json({
+            success: true,
+            count: users.length,
+            users: users
+        });
+    } catch (error) {
+        console.error('Check endpoint error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Error handling middleware
 app.use(errorHandler);
 
@@ -88,6 +126,8 @@ app.use(errorHandler);
 app.use((req, res) => {
     res.status(404).json({ message: 'Route not found' });
 });
+
+
 
 // Setup Socket.io handlers
 setupSocketHandlers(io);

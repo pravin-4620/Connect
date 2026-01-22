@@ -9,7 +9,7 @@ echo ""
 if [ -z "$1" ]; then
     echo "❌ Error: DATABASE_URL not provided"
     echo ""
-    echo "Usage: ./view-database.sh 'your-database-url'"
+    echo "Usage: ./view-database.sh 'postgresql://neondb_owner:npg_uiN2Xlw6LObD@ep-divine-surf-ahm7czd8-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'"
     echo ""
     echo "Get your DATABASE_URL from:"
     echo "1. Go to Render → Your service → Environment"
