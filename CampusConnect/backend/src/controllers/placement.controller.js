@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { success, error } from '../utils/response.js';
+import { publicEmail } from '../mail/privacy.js';
 
 const prisma = new PrismaClient();
 
@@ -768,7 +769,7 @@ export const getEmails = async (req, res) => {
             orderBy: { receivedAt: 'desc' }
         });
 
-        return success(res, { emails }, 'Emails fetched');
+        return success(res, { emails: emails.map(publicEmail) }, 'Emails fetched');
     } catch (err) {
         console.error('Get emails error:', err);
         return error(res, 'Failed to fetch emails', 500);

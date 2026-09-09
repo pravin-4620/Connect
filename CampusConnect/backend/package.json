@@ -13,7 +13,10 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "node prisma/seed.js"
+    "prisma:seed": "node prisma/seed.js",
+    "test": "node --test test/*.test.js",
+    "inbox:create-user": "node scripts/create-inbox-user.js",
+    "mail:train": "node scripts/train-classifier.js"
   },
   "keywords": [
     "campus",

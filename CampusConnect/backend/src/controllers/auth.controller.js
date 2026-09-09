@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { randomBytes } from 'node:crypto';
 import { getGmailAuthUrl, handleGmailCallback } from '../services/gmail.service.js';
 import { success, error } from '../utils/response.js';
 
@@ -318,7 +319,9 @@ export const checkMaintenanceStatus = async (req, res) => {
 export const gmailConnect = async (req, res) => {
     try {
         const { userId } = req;
-        const authUrl = getGmailAuthUrl(userId);
+        const nonce = randomBytes(32).toString('hex');
+        const authUrl = await getGmailAuthUrl(userId, nonce);
+        res.cookie('gmail_oauth', nonce, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 600000, path: '/api/auth/gmail-callback' });
         return success(res, { authUrl }, 'Gmail auth URL generated');
     } catch (err) {
         console.error('Gmail connect error:', err);
@@ -337,7 +340,9 @@ export const gmailCallback = async (req, res) => {
             return error(res, 'Missing authorization code or state', 400);
         }
 
-        await handleGmailCallback(code, state);
+        const nonce = req.headers.cookie?.split(';').map(v => v.trim()).find(v => v.startsWith('gmail_oauth='))?.slice('gmail_oauth='.length);
+        await handleGmailCallback(code, state, nonce);
+        res.clearCookie('gmail_oauth', { path: '/api/auth/gmail-callback' });
 
         // Redirect to frontend with success
         res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/settings?gmail=success`);
