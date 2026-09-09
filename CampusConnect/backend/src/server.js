@@ -10,6 +10,7 @@ import mentorRoutes from './routes/mentor.routes.js';
 import placementRoutes from './routes/placement.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import chatRoutes from './routes/chat.routes.js';
+import mailRoutes from './routes/mail.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import bugReportRoutes from './routes/bugReport.routes.js';
 import { setupSocketHandlers } from './services/chat.service.js';
@@ -77,6 +78,7 @@ app.use('/api/mentor', mentorRoutes);
 app.use('/api/placement', placementRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/mail', mailRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/bug-reports', bugReportRoutes);
 
@@ -144,5 +146,4 @@ server.listen(PORT, () => {
 });
 
 export default app;
-
 

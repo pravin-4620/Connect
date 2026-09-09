@@ -41,8 +41,24 @@ enum Priority {
 enum EmailCategory {
   PLACEMENT
   ACADEMIC
+  WORK
+  FINANCE
+  SHOPPING
+  TRAVEL
+  SOCIAL
+  SOCIAL_MEDIA
+  FORUM
+  NEWSLETTERS
+  RECEIPTS
+  SECURITY
+  VERIFY_CODE
+  UPDATES
+  LEARNING
+  SUPPORT
   PERSONAL
   SPAM
+  PROMOTIONS
+  REVIEW
 }
 
 model User {
@@ -55,6 +71,14 @@ model User {
   phone             String?
   profilePicture    String?
   isFirstLogin      Boolean   @default(true)
+  gmailAddress      String?
+  mailCursor        String?
+  mailLease         DateTime?
+  mailLeaseId       String?
+  mailStatus        String    @default("IDLE")
+  mailError         String?
+  mailImported      Int       @default(0)
+  mailLastSync      DateTime?
   gmailConnected    Boolean   @default(false)
   gmailAccessToken  String?
   gmailRefreshToken String?
@@ -336,11 +360,14 @@ model StudyMaterial {
 model Email {
   id             String        @id @default(cuid())
   userId         String
-  gmailMessageId String        @unique
+  gmailMessageId String
   subject        String
   fromEmail      String
   toEmail        String
   body           String
+  classificationStatus String @default("PENDING")
+  confidence     Float?
+  reason         String?
   category       EmailCategory
   receivedAt     DateTime
   isRead         Boolean       @default(false)
@@ -348,6 +375,16 @@ model Email {
   user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   createdAt DateTime @default(now())
+  @@unique([userId, gmailMessageId])
+  @@index([userId, receivedAt])
+  @@index([userId, classificationStatus])
+}
+
+model GmailOAuthState {
+  id String @id
+  userId String
+  browserHash String
+  expiresAt DateTime
 }
 
 model Message {

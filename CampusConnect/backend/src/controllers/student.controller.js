@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { uploadResume, uploadAssignment } from '../services/upload.service.js';
 import { analyzeResume as analyzeResumeAI } from '../services/openai.service.js';
 import { getCategorizedEmails } from '../services/gmail.service.js';
+import { publicEmail } from '../mail/privacy.js';
 import pdf from 'pdf-parse';
 import mammoth from 'mammoth';
 import { success, error } from '../utils/response.js';
@@ -848,7 +849,7 @@ export const getEmails = async (req, res) => {
 
         const emails = await getCategorizedEmails(userId, category, parseInt(limit));
 
-        return success(res, { emails }, 'Emails fetched');
+        return success(res, { emails: emails.map(publicEmail) }, 'Emails fetched');
     } catch (err) {
         console.error('Get emails error:', err);
         return error(res, 'Failed to fetch emails', 500);
