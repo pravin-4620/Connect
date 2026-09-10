@@ -71,6 +71,10 @@ This guide will help you deploy the CampusConnect application to production.
    FRONTEND_URL=https://your-app-name.vercel.app
    NODE_ENV=production
    PORT=5001
+   GMAIL_CLIENT_ID=<your-google-oauth-client-id>
+   GMAIL_CLIENT_SECRET=<your-google-oauth-client-secret>
+   GMAIL_REDIRECT_URI=https://campusconnect-backend-xang.onrender.com/api/auth/gmail-callback
+   GMAIL_TOKEN_KEY=<64-hex-character-secret>
    ```
 
    **To generate a secure JWT_SECRET**, run:
@@ -136,6 +140,14 @@ This guide will help you deploy the CampusConnect application to production.
 1. Go back to your backend service (Render/Railway)
 2. Update the `FRONTEND_URL` environment variable with your actual Vercel URL
 3. Redeploy the backend service
+
+For Gmail OAuth, add the exact backend callback to Google Cloud Console:
+
+```text
+https://campusconnect-backend-xang.onrender.com/api/auth/gmail-callback
+```
+
+The same value must be set as `GMAIL_REDIRECT_URI` in Render.
 
 ---
 

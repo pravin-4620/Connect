@@ -17,7 +17,11 @@ JWT_SECRET=campusconnect-super-secret-jwt-key-2024-change-in-production
 JWT_EXPIRES_IN=7d
 
 # Server
+# Must be the exact frontend origin shown in the browser, with no trailing path.
+# You can add multiple origins separated by commas.
 FRONTEND_URL=https://your-vercel-frontend.vercel.app
+# Optional for Vercel preview deployments:
+# FRONTEND_URL=https://your-vercel-frontend.vercel.app,https://*.vercel.app
 PORT=5001
 NODE_ENV=production
 
@@ -29,11 +33,23 @@ CLOUDINARY_API_SECRET=9ai4wrK1-vfEdFJPAn-iv1qa8qk
 # Gmail OAuth (Optional)
 GMAIL_CLIENT_ID=
 GMAIL_CLIENT_SECRET=
-GMAIL_REDIRECT_URI=https://your-backend.onrender.com/api/auth/gmail-callback
+GMAIL_REDIRECT_URI=https://campusconnect-backend-xang.onrender.com/api/auth/gmail-callback
 
 # OpenAI (Optional)
 OPENAI_API_KEY=
 ```
+
+## Google OAuth Redirect URI
+
+In Google Cloud Console, open your OAuth client and add this exact URI under
+**Authorized redirect URIs**:
+
+```text
+https://campusconnect-backend-xang.onrender.com/api/auth/gmail-callback
+```
+
+It must exactly match the Render `GMAIL_REDIRECT_URI` value, including `https`,
+domain, and `/api/auth/gmail-callback`.
 
 ---
 

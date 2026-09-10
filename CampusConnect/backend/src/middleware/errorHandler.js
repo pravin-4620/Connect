@@ -21,6 +21,10 @@ export const errorHandler = (err, req, res, next) => {
         return error(res, 'Token expired', 401);
     }
 
+    if (['P2021', 'P2022'].includes(err.code)) {
+        return error(res, 'Database schema is not up to date. Run backend Prisma migrations and redeploy.', 503);
+    }
+
     // Custom App Error (if we use a class for it, assuming strict structure for now)
     if (err.statusCode) {
         return error(res, err.message, err.statusCode, err.errors);

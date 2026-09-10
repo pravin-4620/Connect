@@ -16,6 +16,7 @@ import bugReportRoutes from './routes/bugReport.routes.js';
 import { setupSocketHandlers } from './services/chat.service.js';
 import { startEmailSyncJob } from './jobs/email-sync.job.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { getAllowedOriginsForLog, isAllowedOrigin } from './config/origins.js';
 
 // Load environment variables
 dotenv.config();
@@ -23,14 +24,12 @@ dotenv.config();
 const app = express();
 const server = createServer(app);
 
-// Socket.io setup
-const allowedOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim()).filter(Boolean)
-    : ['http://localhost:3000', 'http://127.0.0.1:3000'];
-
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: (origin, callback) => {
+            if (isAllowedOrigin(origin)) return callback(null, true);
+            return callback(new Error(`CORS blocked origin: ${origin}`));
+        },
         methods: ['GET', 'POST'],
         credentials: true
     }
@@ -42,14 +41,8 @@ app.set('io', io);
 // Middleware
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-
-        if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
+        if (isAllowedOrigin(origin)) return callback(null, true);
+        return callback(new Error(`CORS blocked origin: ${origin}`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -143,6 +136,7 @@ server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📡 WebSocket ready on ws://localhost:${PORT}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+    console.log(`🔐 Allowed frontend origins: ${getAllowedOriginsForLog().join(', ') || '(none configured)'}`);
 });
 
 export default app;

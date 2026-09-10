@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001';
+const socketUrlFromApi = () => {
+    const apiUrl = import.meta.env.VITE_API_URL;
+    return apiUrl ? apiUrl.replace(/\/api\/?$/, '') : 'http://localhost:5001';
+};
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || socketUrlFromApi();
 
 type ListenerCallback = (...args: any[]) => void;
 
@@ -20,6 +24,7 @@ class SocketService {
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
+            transports: ['websocket', 'polling'],
         });
 
         this.socket.on('connect', () => {
