@@ -83,6 +83,16 @@ test('classifier failure preserves pending mail and releases lease', async () =>
  const h = harness({classifierFailure:true}); await h.service.syncEmails('alice');
  assert.equal(h.emails.size,2); assert.equal(h.user.mailStatus,'ERROR'); assert.equal(h.user.mailLease,null); assert.equal(h.emails.get('alice:1').classificationStatus,'PENDING');
 });
+test('sync asks for Gmail reconnect when encrypted tokens cannot be decrypted', async () => {
+ const h = harness();
+ const parts = encrypt('access').split(':');
+ parts[2] = '00'.repeat(16);
+ h.user.gmailAccessToken = parts.join(':');
+ await h.service.syncEmails('alice');
+ assert.equal(h.user.mailStatus,'ERROR');
+ assert.equal(h.user.gmailConnected,false);
+ assert.match(h.user.mailError,/Reconnect Gmail/);
+});
 test('retry filters pending mail while preserving manual categories', async () => {
  const h = harness(); await h.service.syncEmails('alice'); h.emails.get('alice:1').classificationStatus = 'MANUAL'; h.emails.get('alice:1').category = 'PERSONAL';
  await h.service.syncEmails('alice'); assert.equal(h.emails.get('alice:1').category,'PERSONAL'); assert.equal(h.emails.get('alice:2').category,'WORK');

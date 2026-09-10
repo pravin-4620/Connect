@@ -13,6 +13,24 @@ const FETCH_CONCURRENCY = 5;
 
 const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 const isRetryableGmailError = error => [403, 429, 500, 502, 503, 504].includes(Number(error?.code || error?.response?.status));
+function isTokenDecryptError(error) {
+  return ['Unsupported state or unable to authenticate data', 'Invalid authentication tag length'].includes(error?.message)
+    || /decrypt|authenticate|bad decrypt|wrong final block length/i.test(error?.message || '');
+}
+function syncFailureMessage(error) {
+  const gmailError = error.response?.data?.error;
+  const detail = gmailError?.message || gmailError?.errors?.[0]?.reason || error.message;
+  const status = Number(error.code || error.response?.status);
+  if (error.message === 'Unsupported Gmail sync window') return error.message;
+  if (error.message === 'GMAIL_TOKEN_KEY must be 64 hex characters') return 'Gmail token encryption key is not configured correctly on the backend.';
+  if (error.message === 'Reconnect Gmail to securely store credentials' || isTokenDecryptError(error)) return 'Gmail credentials could not be decrypted. Reconnect Gmail once, then retry Sync.';
+  if (status === 401 || gmailError === 'invalid_grant') return 'Gmail access expired or was revoked. Reconnect Gmail, then retry Sync.';
+  if (status === 403) return `Gmail denied access${detail ? `: ${detail}` : '. Check Gmail API access and OAuth consent settings.'}`;
+  if (status === 429 || /quota|rate.?limit/i.test(detail || '')) return 'Gmail quota or rate limit reached. Wait a few minutes, then retry Sync.';
+  if (['ENOTFOUND', 'ECONNRESET', 'ETIMEDOUT', 'ECONNREFUSED'].includes(error.code)) return 'Network error while contacting Gmail. Check backend connectivity, then retry Sync.';
+  if (['P2021', 'P2022'].includes(error.code)) return 'Database schema is not up to date. Redeploy the backend so startup repair/migrations can run.';
+  return 'Import or filtering paused. Check Gmail credentials, quota, and connectivity, then retry Sync.';
+}
 async function withGmailRetry(operation) {
   for (let attempt = 0; ; attempt += 1) {
     try {
@@ -153,18 +171,11 @@ async function syncEmails(userId, { query = DEFAULT_SYNC_QUERY, maxMessages = MA
     await classifyPendingEmails({ prisma, userId, heartbeat, classify, statuses: ['PENDING', 'DONE'] });
     await update({ mailStatus: 'COMPLETE', mailError: null });
   } catch (err) {
-    const authError = err.code === 401 || err.response?.data?.error === 'invalid_grant';
+    const authError = err.code === 401 || err.response?.data?.error === 'invalid_grant' || err.message === 'Reconnect Gmail to securely store credentials' || isTokenDecryptError(err);
     const gmailError = err.response?.data?.error;
     const accessError = Number(err.code || err.response?.status) === 403;
-    const windowError = err.message === 'Unsupported Gmail sync window';
     const detail = gmailError?.message || gmailError?.errors?.[0]?.reason;
-    const mailError = authError
-      ? 'Gmail access expired. Reconnect your account.'
-      : windowError
-        ? err.message
-        : accessError
-          ? `Gmail denied access${detail ? `: ${detail}` : '. Check that the Gmail API is enabled and this account is allowed.'}`
-          : 'Import or filtering paused. Check Gmail credentials, quota, and connectivity, then retry Sync.';
+    const mailError = syncFailureMessage(err);
     let finalStatus = 'ERROR';
     try {
       if (accessError) {
