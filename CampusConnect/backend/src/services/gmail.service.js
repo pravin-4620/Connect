@@ -40,9 +40,9 @@ async function getGmailAuthUrl(userId, browserNonce) {
   return oauth().generateAuthUrl({ access_type: 'offline', prompt: 'select_account consent', scope: [GMAIL_SCOPE], state });
 }
 async function handleGmailCallback(code, state, browserNonce) {
-  if (typeof code !== 'string' || typeof state !== 'string' || !browserNonce) throw new Error('Invalid OAuth callback');
+  if (typeof code !== 'string' || typeof state !== 'string') throw new Error('Invalid OAuth callback');
   const saved = await prisma.gmailOAuthState.findUnique({ where: { id: hash(state) } });
-  if (!saved || saved.expiresAt < new Date() || saved.browserHash !== hash(browserNonce)) throw new Error('Expired or invalid OAuth state');
+  if (!saved || saved.expiresAt < new Date() || (browserNonce && saved.browserHash !== hash(browserNonce))) throw new Error('Expired or invalid OAuth state');
   const consumed = await prisma.gmailOAuthState.deleteMany({ where: { id: saved.id } });
   if (!consumed.count) throw new Error('OAuth state already used');
   const client = oauth();

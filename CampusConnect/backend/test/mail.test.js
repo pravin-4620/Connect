@@ -99,3 +99,9 @@ test('OAuth state is random, browser-bound, expiring, and single-use', async () 
  assert.equal(await h.service.handleGmailCallback('code',state,nonce),'alice'); await assert.rejects(h.service.handleGmailCallback('code',state,nonce));
  const expired = await h.service.getGmailAuthUrl('alice',nonce); h.states.get(hash(expired)).expiresAt = new Date(0); await assert.rejects(h.service.handleGmailCallback('code',expired,nonce));
 });
+test('OAuth callback works when production browser blocks the helper cookie', async () => {
+ Object.assign(process.env,{GMAIL_CLIENT_ID:'test',GMAIL_CLIENT_SECRET:'test',GMAIL_REDIRECT_URI:'http://localhost/callback'});
+ const h = harness(), state = await h.service.getGmailAuthUrl('alice','browser-secret');
+ assert.equal(await h.service.handleGmailCallback('code',state,undefined),'alice');
+ await assert.rejects(h.service.handleGmailCallback('code',state,undefined));
+});
