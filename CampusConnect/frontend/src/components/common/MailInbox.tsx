@@ -100,8 +100,8 @@ export default function MailInbox() {
             setPage(emailResponse.data.page || nextPage);
             setPages(emailResponse.data.pages || 1);
             setTotal(emailResponse.data.total || 0);
-        } catch {
-            toast.error('Could not load Gmail inbox');
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Could not load Gmail inbox');
         } finally {
             setLoading(false);
         }

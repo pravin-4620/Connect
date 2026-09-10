@@ -61,14 +61,15 @@ api.interceptors.response.use(
                     toast.error('Server Error', { description: 'Please try again later' });
                     break;
                 case 503:
-                    // Maintenance Mode - Force Logout
-                    toast.error('System Maintenance', { description: 'The system is currently under maintenance.' });
-                    if (!window.location.pathname.includes('/login')) {
+                    if (/maintenance/i.test(message) && !window.location.pathname.includes('/login')) {
                         localStorage.removeItem('token');
                         localStorage.removeItem('user');
+                        toast.error('System Maintenance', { description: 'The system is currently under maintenance.' });
                         setTimeout(() => {
                             window.location.href = '/login';
-                        }, 1500); // Small delay to read toast
+                        }, 1500);
+                    } else {
+                        toast.error('Service Unavailable', { description: message });
                     }
                     break;
                 default:
