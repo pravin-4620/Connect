@@ -18,6 +18,7 @@ api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
         if (token) {
+            config.headers = config.headers || {};
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -34,6 +35,10 @@ api.interceptors.response.use(
         if (error.response) {
             switch (error.response.status) {
                 case 401:
+                    if (error.config?.url?.includes('/auth/gmail-connect')) {
+                        toast.error('Your session expired. Please log in again before connecting Gmail.');
+                        break;
+                    }
                     // Only redirect/toast if not on login page (avoids loops and wrong password toasts)
                     if (!window.location.pathname.includes('/login')) {
                         localStorage.removeItem('token');
