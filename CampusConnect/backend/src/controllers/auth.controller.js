@@ -322,7 +322,7 @@ export const gmailConnect = async (req, res) => {
         const { userId } = req;
         const nonce = randomBytes(32).toString('hex');
         const authUrl = await getGmailAuthUrl(userId, nonce);
-        res.cookie('gmail_oauth', nonce, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 600000, path: '/api/auth/gmail-callback' });
+        res.cookie('gmail_oauth', nonce, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 600000, path: '/api/auth/gmail-callback' });
         return success(res, { authUrl }, 'Gmail auth URL generated');
     } catch (err) {
         console.error('Gmail connect error:', err);
@@ -334,15 +334,16 @@ export const gmailConnect = async (req, res) => {
  * Gmail callback - handle OAuth callback
  */
 export const gmailCallback = async (req, res) => {
+    const callbackError = (message) => `${frontendRedirectUrl()}/gmail-error?reason=${encodeURIComponent(message)}`;
     try {
         const { code, state } = req.query;
 
         if (req.query.error) {
-            return res.redirect(`${frontendRedirectUrl()}/gmail-error`);
+            return res.redirect(callbackError(`Google authorization was cancelled: ${req.query.error}`));
         }
 
         if (!code || !state) {
-            return error(res, 'Missing authorization code or state', 400);
+            return res.redirect(callbackError('Google did not return an authorization code.'));
         }
 
         const nonce = req.headers.cookie?.split(';').map(v => v.trim()).find(v => v.startsWith('gmail_oauth='))?.slice('gmail_oauth='.length);
@@ -353,8 +354,12 @@ export const gmailCallback = async (req, res) => {
         res.redirect(`${frontendRedirectUrl()}/gmail-connected`);
     } catch (err) {
         console.error('Gmail callback error:', err);
-        // Redirect to frontend with error
-        res.redirect(`${frontendRedirectUrl()}/gmail-error`);
+        const message = err.message === 'Invalid OAuth callback' || err.message === 'Expired or invalid OAuth state'
+            ? `${err.message}. Refresh the app and start Connect Gmail again.`
+            : err.message === 'Google did not provide offline access; reconnect Gmail'
+                ? 'Google did not grant offline access. Select the Google account again and approve Gmail access.'
+                : 'Gmail connection failed on the server. Check the Render logs for the full error.';
+        res.redirect(callbackError(message));
     }
 };
 

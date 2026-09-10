@@ -1,10 +1,12 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { AlertCircle } from 'lucide-react';
 
 const GmailError = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const reason = searchParams.get('reason');
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -20,10 +22,10 @@ const GmailError = () => {
                 </CardHeader>
                 <CardContent>
                     <p className="text-muted-foreground mb-6">
-                        Please try again later or contact support if the issue persists.
+                        {reason || 'Please try again later or contact support if the issue persists.'}
                     </p>
-                    <Button variant="outline" onClick={() => navigate('/student/profile')} className="w-full">
-                        Return to Profile
+                    <Button variant="outline" onClick={() => navigate('/')} className="w-full">
+                        Return to CampusConnect
                     </Button>
                 </CardContent>
             </Card>
