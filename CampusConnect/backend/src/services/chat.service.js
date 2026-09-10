@@ -1,7 +1,23 @@
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import { syncEmails } from './gmail.service.js';
 
 const prisma = new PrismaClient();
+const AUTO_SYNC_QUERY = process.env.MAIL_AUTO_SYNC_QUERY || 'newer_than:7d';
+const ONLINE_SYNC_INTERVAL_MS = Math.max(Number(process.env.MAIL_ONLINE_SYNC_INTERVAL_MS || 120000), 30000);
+
+function emitNewMail(io, userId, email) {
+    io.to(`user_${userId}`).emit('new-mail', {
+        id: email.id,
+        gmailMessageId: email.gmailMessageId,
+        subject: email.subject,
+        fromEmail: email.fromEmail,
+        body: email.body,
+        receivedAt: email.receivedAt,
+        category: email.category,
+        attachments: email.attachments || [],
+    });
+}
 
 // Store online users: userId -> socketId
 const onlineUsers = new Map();
@@ -32,18 +48,29 @@ export const setupSocketHandlers = (io) => {
          * User joins their personal room
          */
         socket.on('join-user', (userId) => {
-            socket.join(`user_${userId}`);
-            onlineUsers.set(userId, socket.id);
-            socket.userId = userId;
+            const joinedUserId = socket.userId || userId;
+            socket.join(`user_${joinedUserId}`);
+            onlineUsers.set(joinedUserId, socket.id);
+            socket.userId = joinedUserId;
 
-            console.log(`✅ User ${userId} joined personal room`);
+            console.log(`✅ User ${joinedUserId} joined personal room`);
 
             // Broadcast online status to all users
-            io.emit('user-online', { userId, online: true });
+            io.emit('user-online', { userId: joinedUserId, online: true });
 
             // Send list of online users to the newly connected user
             const onlineUserIds = Array.from(onlineUsers.keys());
             socket.emit('online-users', onlineUserIds);
+
+            const runMailSync = (query = 'newer_than:2m') => {
+                void syncEmails(joinedUserId, {
+                    query,
+                    onNewEmail: (email) => emitNewMail(io, joinedUserId, email),
+                }).catch((error) => console.error('Auto Gmail sync failed:', error.message));
+            };
+            runMailSync(AUTO_SYNC_QUERY);
+            clearInterval(socket.data.mailSyncInterval);
+            socket.data.mailSyncInterval = setInterval(() => runMailSync(), ONLINE_SYNC_INTERVAL_MS);
         });
 
         /**
@@ -187,6 +214,7 @@ export const setupSocketHandlers = (io) => {
          * Disconnect
          */
         socket.on('disconnect', () => {
+            clearInterval(socket.data.mailSyncInterval);
             if (socket.userId) {
                 onlineUsers.delete(socket.userId);
 

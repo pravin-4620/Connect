@@ -42,6 +42,7 @@ class SocketService {
         this.socket.on('message-read', (data) => this.emitToListeners('messageRead', data));
         this.socket.on('user-typing', (data) => this.emitToListeners('typing', data));
         this.socket.on('notification', (data) => this.emitToListeners('notification', data));
+        this.socket.on('new-mail', (data) => this.emitToListeners('newMail', data));
 
         // Maintenance mode listener
         this.socket.on('maintenance:status', (data) => {

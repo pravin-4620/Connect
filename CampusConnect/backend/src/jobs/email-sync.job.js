@@ -4,11 +4,25 @@ import { syncEmails } from '../services/gmail.service.js';
 
 const prisma = new PrismaClient();
 
+function emitNewMail(io, userId, email) {
+    if (!io) return;
+    io.to(`user_${userId}`).emit('new-mail', {
+        id: email.id,
+        gmailMessageId: email.gmailMessageId,
+        subject: email.subject,
+        fromEmail: email.fromEmail,
+        body: email.body,
+        receivedAt: email.receivedAt,
+        category: email.category,
+        attachments: email.attachments || [],
+    });
+}
+
 /**
  * Sync emails for all connected users
  * Runs every 15 minutes
  */
-const syncAllEmails = async () => {
+const syncAllEmails = async (io) => {
     try {
         console.log('📧 Starting email sync job...');
 
@@ -22,7 +36,7 @@ const syncAllEmails = async () => {
 
         for (const user of users) {
             try {
-                await syncEmails(user.id);
+                await syncEmails(user.id, { onNewEmail: (email) => emitNewMail(io, user.id, email) });
                 console.log(`✅ Synced emails for ${user.email}`);
             } catch (error) {
                 console.error(`❌ Failed to sync emails for ${user.email}:`, error.message);
@@ -230,11 +244,11 @@ const cleanupAnalytics = async () => {
 /**
  * Start all cron jobs
  */
-export const startEmailSyncJob = () => {
+export const startEmailSyncJob = (io) => {
     console.log('⏰ Initializing cron jobs...');
 
     // Email sync - every 15 minutes
-    cron.schedule('*/15 * * * *', syncAllEmails);
+    cron.schedule('*/15 * * * *', () => syncAllEmails(io));
     console.log('✅ Email sync job scheduled (every 15 minutes)');
 
     // Student year update - August 1st at midnight

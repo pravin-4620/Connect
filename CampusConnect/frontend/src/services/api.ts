@@ -7,6 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const api = axios.create({
     baseURL: API_BASE_URL,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -89,6 +90,23 @@ export const authAPI = {
     updateProfile: (data: any) => api.put('/auth/profile', data),
     handleGmailCallback: (code: string) => api.get(`/auth/gmail-callback?code=${code}`),
     getProfile: () => api.get('/auth/profile'),
+};
+
+export const mailAPI = {
+    getStatus: () => api.get('/mail/status'),
+    getEmails: (params?: { category?: string; search?: string; unread?: boolean; page?: number }) =>
+        api.get('/mail', { params }),
+    sync: (query = 'newer_than:2m') => api.post('/mail/sync', { query }),
+    applyLabels: () => api.post('/mail/labels'),
+    update: (id: string, data: { category?: string; isRead?: boolean }) => api.patch(`/mail/${id}`, data),
+    send: (data: { to: string; cc?: string; bcc?: string; subject: string; body: string; threadId?: string; replyTo?: string }) => api.post('/mail/send', data),
+    archive: (id: string) => api.post(`/mail/${id}/archive`),
+    trash: (id: string) => api.post(`/mail/${id}/trash`),
+    delete: (id: string) => api.delete(`/mail/${id}`),
+    star: (id: string, starred: boolean) => api.post(`/mail/${id}/star`, { starred }),
+    setRead: (id: string, isRead: boolean) => api.post(`/mail/${id}/read`, { isRead }),
+    downloadAttachment: (emailId: string, attachmentId: string) =>
+        api.get(`/mail/${emailId}/attachments/${attachmentId}`, { responseType: 'blob' }),
 };
 
 export const studentAPI = {

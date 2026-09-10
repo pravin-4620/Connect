@@ -58,11 +58,23 @@ const Layout = () => {
             });
         };
 
+        const handleNewMail = (data: any) => {
+            toast.info('New Gmail message', {
+                description: data.subject || 'You have a new email',
+                action: {
+                    label: 'View',
+                    onClick: () => navigate(`/${user?.role === 'STUDENT' ? 'student' : user?.role === 'MENTOR' || user?.role === 'CHIEF_MENTOR' ? 'mentor' : 'placement'}/mails`)
+                },
+                duration: 5000,
+            });
+        };
+
         // Always listen for general notifications
         socketService.on('notification', handleNotification);
 
         if (user) {
             socketService.on('newMessage', handleNewMessage);
+            socketService.on('newMail', handleNewMail);
         }
 
         // Cleanup for general notifications
@@ -70,6 +82,7 @@ const Layout = () => {
             socketService.off('notification', handleNotification);
             if (user) {
                 socketService.off('newMessage', handleNewMessage);
+                socketService.off('newMail', handleNewMail);
             }
         };
     }, [navigate, user]);

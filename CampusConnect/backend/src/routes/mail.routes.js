@@ -1,11 +1,11 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticate } from '../middleware/auth.js';
-import { applyCategoryLabels, gmailConfigured, syncEmails } from '../services/gmail.service.js';
+import { applyCategoryLabels, archiveEmail, deleteEmail, getAttachment, gmailConfigured, markEmail, sendEmail, starEmail, syncEmails, trashEmail } from '../services/gmail.service.js';
 import { categories } from '../mail/classifier.js';
 import { publicEmail } from '../mail/privacy.js';
 const router = express.Router(), prisma = new PrismaClient();
-const syncQueries = new Set(['newer_than:2m', 'newer_than:30d', 'newer_than:7d', 'newer_than:1y']);
+const syncQueries = new Set(['all', 'newer_than:2m', 'newer_than:30d', 'newer_than:7d', 'newer_than:1y']);
 router.use(authenticate);
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 const handle = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
@@ -29,10 +29,42 @@ router.post('/sync', handle(async (req, res) => {
   void syncEmails(req.userId, { query }).catch(() => console.error('Could not start mail sync'));
   res.status(202).json({ message: 'Sync requested' });
 }));
+router.get('/:id/attachments/:attachmentId', handle(async (req, res) => {
+  const attachment = await getAttachment(req.userId, req.params.id, req.params.attachmentId);
+  res.setHeader('Content-Type', attachment.mimeType || 'application/octet-stream');
+  res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(attachment.filename || 'attachment')}"`);
+  res.send(attachment.data);
+}));
 router.post('/labels', handle(async (req, res) => {
   if (!req.user.gmailConnected) return res.status(409).json({ message: 'Connect Gmail first' });
   const result = await applyCategoryLabels(req.userId);
   res.json({ success: true, ...result });
+}));
+router.post('/send', handle(async (req, res) => {
+  const result = await sendEmail(req.userId, req.body || {});
+  res.status(201).json({ success: true, message: result.id });
+}));
+router.post('/:id/archive', handle(async (req, res) => {
+  await archiveEmail(req.userId, req.params.id);
+  await prisma.email.deleteMany({ where: { id: req.params.id, userId: req.userId } });
+  res.json({ success: true });
+}));
+router.post('/:id/trash', handle(async (req, res) => {
+  await trashEmail(req.userId, req.params.id);
+  res.json({ success: true });
+}));
+router.delete('/:id', handle(async (req, res) => {
+  await deleteEmail(req.userId, req.params.id);
+  res.json({ success: true });
+}));
+router.post('/:id/star', handle(async (req, res) => {
+  await starEmail(req.userId, req.params.id, req.body?.starred !== false);
+  res.json({ success: true });
+}));
+router.post('/:id/read', handle(async (req, res) => {
+  await markEmail(req.userId, req.params.id, req.body?.isRead !== false);
+  await prisma.email.updateMany({ where: { id: req.params.id, userId: req.userId }, data: { isRead: req.body?.isRead !== false } });
+  res.json({ success: true });
 }));
 router.patch('/:id', handle(async (req, res) => {
   const { category, isRead } = req.body;

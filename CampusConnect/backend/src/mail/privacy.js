@@ -3,5 +3,5 @@ export function redactSensitiveText(value) {
 }
 
 export function publicEmail(email) {
-  return { ...email, fromEmail: redactSensitiveText(email.fromEmail), toEmail: redactSensitiveText(email.toEmail), body: redactSensitiveText(email.body) };
+  return email;
 }

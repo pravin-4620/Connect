@@ -6,6 +6,7 @@ import { getGmailAuthUrl, handleGmailCallback } from '../services/gmail.service.
 import { success, error } from '../utils/response.js';
 
 const prisma = new PrismaClient();
+const frontendRedirectUrl = () => (process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0].trim();
 
 /**
  * Generate JWT token
@@ -336,6 +337,10 @@ export const gmailCallback = async (req, res) => {
     try {
         const { code, state } = req.query;
 
+        if (req.query.error) {
+            return res.redirect(`${frontendRedirectUrl()}/gmail-error`);
+        }
+
         if (!code || !state) {
             return error(res, 'Missing authorization code or state', 400);
         }
@@ -345,11 +350,11 @@ export const gmailCallback = async (req, res) => {
         res.clearCookie('gmail_oauth', { path: '/api/auth/gmail-callback' });
 
         // Redirect to frontend with success
-        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/settings?gmail=success`);
+        res.redirect(`${frontendRedirectUrl()}/gmail-connected`);
     } catch (err) {
         console.error('Gmail callback error:', err);
         // Redirect to frontend with error
-        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/settings?gmail=error`);
+        res.redirect(`${frontendRedirectUrl()}/gmail-error`);
     }
 };
 

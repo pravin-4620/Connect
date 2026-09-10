@@ -25,8 +25,8 @@ const server = createServer(app);
 
 // Socket.io setup
 const allowedOrigins = process.env.FRONTEND_URL
-    ? process.env.FRONTEND_URL.split(',')
-    : ['http://localhost:3000'];
+    ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim()).filter(Boolean)
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
 const io = new Server(server, {
     cors: {
@@ -135,7 +135,7 @@ app.use((req, res) => {
 setupSocketHandlers(io);
 
 // Start cron jobs
-startEmailSyncJob();
+startEmailSyncJob(io);
 
 const PORT = process.env.PORT || 5000;
 
@@ -146,4 +146,3 @@ server.listen(PORT, () => {
 });
 
 export default app;
-

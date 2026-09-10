@@ -56,6 +56,15 @@ test('invalid and low-confidence classifications never hide messages as spam', (
  assert.equal(validateClassification({category:'SPAM',confidence:.6,reason:'Uncertain'}).category,'REVIEW');
 });
 test('local classifier works without an OpenAI key', async () => { delete process.env.OPENAI_API_KEY; const result = await classifyEmail({subject:'Security alert',body:'new sign-in detected'}); assert.equal(result.category,'SECURITY'); assert.equal(result.classificationStatus,'DONE'); });
+test('campus and social senders are not merged into finance by generic bank words', async () => {
+ delete process.env.OPENAI_API_KEY;
+ assert.equal((await classifyEmail({fromEmail:'"REVATHI R EE012 (Classroom)" <no-reply@classroom.google.com>',subject:'New announcement: "Question Bank for all 5 units"',body:'Posted in Google Classroom'})).category,'ACADEMIC');
+ assert.equal((await classifyEmail({fromEmail:'LIBRARY KPR <library@kpriet.ac.in>',subject:'Reminder: NPTEL Exam Registration',body:'last date for NPTEL examination registration and courses'})).category,'ACADEMIC');
+ assert.equal((await classifyEmail({fromEmail:'PRINCIPAL KPRIET <principal@kpriet.ac.in>',subject:'Fwd: 7th National Online Quiz on IBC',body:'quiz and code information'})).category,'ACADEMIC');
+ assert.equal((await classifyEmail({fromEmail:'IEEE Membership <ieee@deliver.ieee.org>',subject:'Join a Global Community of Innovators',body:'membership and learning community'})).category,'LEARNING');
+ assert.equal((await classifyEmail({fromEmail:'Pinterest <recommendations@discover.pinterest.com>',subject:'This screams PRAVIN',body:'ideas recommended for you'})).category,'SOCIAL_MEDIA');
+ assert.equal((await classifyEmail({fromEmail:'ACCOUNTS KPR <accounts@kpriet.ac.in>',subject:'Request for Identification of Unidentified Bank Credits',body:'bank credits and transaction'})).category,'FINANCE');
+});
 test('tokens are encrypted and tampering is rejected', () => {
  const ciphertext = encrypt('private-token'); assert.ok(!ciphertext.includes('private-token')); assert.equal(decrypt(ciphertext),'private-token');
  const parts = ciphertext.split(':'); parts[2] = '00'.repeat(16); assert.throws(() => decrypt(parts.join(':'))); assert.throws(() => decrypt('legacy-token'), /Reconnect/);

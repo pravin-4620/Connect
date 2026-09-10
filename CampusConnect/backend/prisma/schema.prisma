@@ -365,6 +365,8 @@ model Email {
   fromEmail      String
   toEmail        String
   body           String
+  htmlBody       String?
+  attachments    Json?
   classificationStatus String @default("PENDING")
   confidence     Float?
   reason         String?

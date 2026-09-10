@@ -4,9 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Button } from '../../components/ui/button';
 import { CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../../context/AuthContext';
 
 const GmailConnected = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+
+    const inboxPath = user?.role === 'STUDENT'
+        ? '/student/mails'
+        : user?.role === 'MENTOR' || user?.role === 'CHIEF_MENTOR'
+            ? '/mentor/mails'
+            : user?.role === 'PLACEMENT_OFFICER' || user?.role === 'PLACEMENT_HEAD'
+                ? '/placement/mails'
+                : '/admin';
 
     useEffect(() => {
         toast.success('Gmail connected successfully!');
@@ -28,8 +38,8 @@ const GmailConnected = () => {
                     <p className="text-muted-foreground mb-6">
                         We will now sync your placement-related emails automatically.
                     </p>
-                    <Button onClick={() => navigate('/student/profile')} className="w-full">
-                        Return to Profile
+                    <Button onClick={() => navigate(inboxPath)} className="w-full">
+                        Open Inbox
                     </Button>
                 </CardContent>
             </Card>
